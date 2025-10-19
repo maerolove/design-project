@@ -1,0 +1,34 @@
+# PROJECT STRUCTURE RULE
+
+## СЛЕДУЙ СТРУКТУРЕ ПРОЕКТА ESPHOME YAML CONSTRUCTOR
+- **ALWAYS follow the established project structure**
+- **ALWAYS use correct directories** for different file types
+- **ALWAYS maintain separation** between stateless and stateful parts
+
+## Project Structure:
+```
+/home/app/
+├── py/                     # Backend Python source (stateless)
+├── src/                    # Frontend React source (stateless)
+├── deployment/             # Deployment configs (stateless)
+├── docs/                   # Documentation (stateless)
+├── data/                   # All data and dependencies (stateful)
+│   ├── env/                # Python virtual environment
+│   ├── storage/            # Application storage
+│   ├── build/              # Frontend build output
+│   └── cache/              # ESPHome cache
+└── FILELIST                # Project structure documentation
+```
+
+## Key Directories:
+- **Backend**: `/home/app/py/` - FastAPI application
+- **Frontend**: `/home/app/src/` - React application  
+- **Production Build**: `/home/app/data/build/` - Static frontend
+- **Dependencies**: `/home/app/data/env/` - Python venv, node_modules
+- **Data**: `/home/app/data/` - All stateful data
+
+## Rules:
+- Never put dependencies in `py/` or `src/`
+- Never put data files in stateless directories
+- Always use `data/` for anything that changes
+- Always update FILELIST when structure changes

@@ -1,0 +1,106 @@
+---
+description: Concrete proposals and solutions rule
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# CONCRETE PROPOSALS RULE
+
+## ВСЕГДА ПРЕДЛАГАЙ КОНКРЕТНЫЕ РЕШЕНИЯ
+- **ALWAYS provide specific, actionable solutions** before asking for permission
+- **ALWAYS give exact commands** that can be executed
+- **ALWAYS explain the reasoning** behind each proposal
+- **NEVER ask "what should I do"** without providing options
+- **NEVER give vague suggestions** like "check something" or "look into it"
+
+## Required Format for Proposals:
+1. **Identify the problem** clearly
+2. **Provide 3-5 specific solutions** with exact commands
+3. **Explain why each solution** might work
+4. **Recommend the best approach** with reasoning
+5. **Ask which solution to try** (not "what should I do")
+
+## Examples of CORRECT Proposals:
+
+### Problem: Service won't start
+**Solution 1 - Check service status:**
+```bash
+sudo systemctl status esphome-backend.service
+sudo journalctl -u esphome-backend.service --lines=20
+```
+**Reason:** Identify the specific error preventing startup.
+
+**Solution 2 - Restart service:**
+```bash
+sudo systemctl restart esphome-backend.service
+```
+**Reason:** Apply any configuration changes.
+
+**Solution 3 - Check configuration:**
+```bash
+sudo nginx -t
+sudo systemctl daemon-reload
+```
+**Reason:** Ensure configuration is valid.
+
+**Recommendation:** Start with Solution 1 to identify the root cause.
+
+### Problem: Import errors in Python
+**Solution 1 - Fix relative imports:**
+```bash
+sed -i 's/from \.\.config/from config/g' backend/services/*.py
+```
+**Reason:** Convert relative imports to absolute imports.
+
+**Solution 2 - Check Python path:**
+```bash
+cd backend && python -c "import sys; print(sys.path)"
+```
+**Reason:** Verify module resolution.
+
+**Recommendation:** Solution 1 addresses the most common import issues.
+
+## Examples of WRONG Approaches:
+- "What should I do about this error?"
+- "Maybe we should check something"
+- "I think there might be a problem"
+- "Let me investigate further"
+- "This needs to be fixed"
+
+## Examples of CORRECT Approaches:
+- "Here are 3 specific solutions with commands"
+- "I recommend Solution 2 because..."
+- "Try this exact command first"
+- "This command will fix the root cause"
+
+## When Multiple Issues Exist:
+1. **List all problems** clearly
+2. **Provide solutions for each** problem
+3. **Prioritize solutions** by impact
+4. **Explain dependencies** between solutions
+5. **Recommend execution order**
+
+## Exception:
+- Only ask for clarification when solutions require user input (passwords, file paths, etc.)
+- Always provide the exact format needed for user input
+
+## Template for Proposals:
+```
+**ПРОБЛЕМА:** [Clear description]
+
+**РЕШЕНИЕ 1 - [Action]:**
+```bash
+[exact command]
+```
+**Причина:** [Why this works]
+
+**РЕШЕНИЕ 2 - [Action]:**
+```bash
+[exact command]
+```
+**Причина:** [Why this works]
+
+**МОЯ РЕКОМЕНДАЦИЯ:** [Which solution and why]
+
+Какое решение попробуем?
+```

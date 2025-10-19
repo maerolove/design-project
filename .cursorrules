@@ -1,0 +1,52 @@
+Project-wide rules for AI coding agents and editors
+
+Context
+- This repository follows KolkhozIO/rulez (see docs/rulez) and uses a curated set of local rules below to keep contributions consistent and high-quality.
+- Do not scaffold new app features unless the ticket explicitly requests it. This repo is currently focused on governance and documentation integration.
+
+Code style and formatting
+- Use Prettier and ESLint defaults configured in the repo. Do not fight the formatter.
+- EditorConfig governs whitespace: 2-space indentation, LF EOL, insert a trailing newline, trim trailing whitespace (except in Markdown).
+- Prefer small, composable modules and pure functions. Keep functions focused, name things clearly.
+- TypeScript: prefer explicit types at module boundaries; let inference work internally.
+
+Architecture and patterns
+- Keep layers separated and aim for clear module boundaries. Avoid global state; inject dependencies where reasonable.
+- Choose boring, proven solutions. Avoid unnecessary abstractions or premature optimization.
+- Logically group code by feature when it improves cohesion; group by type when it improves reuse—use judgment.
+
+Testing expectations
+- Every non-trivial change should include tests (unit or integration). If you skip tests, justify in the PR template.
+- Favor fast unit tests for logic, and smoke tests for wiring. Keep tests deterministic.
+
+Documentation expectations
+- Update README/docs for any behavior change. Include usage examples when relevant.
+- Keep commit messages and PR descriptions clear: what changed, why, and how it was verified.
+
+Performance
+- Keep algorithms simple and linear where possible. Avoid N^2 footguns on large inputs.
+- Measure before optimizing. Document trade-offs in the PR if performance is a concern.
+
+3D editor conventions (for upcoming work)
+- Units: meters everywhere.
+- Coordinate system: Y-up.
+- Default grid snap: 0.1 m.
+- Name transforms and axes consistently; document any coordinate conversions.
+
+Accessibility basics
+- For UI work: provide labels, support keyboard navigation, ensure color contrast, and use ARIA roles where appropriate.
+
+Security and secrets
+- Never commit secrets. Validate and sanitize inputs at trust boundaries.
+
+Dependencies and tools
+- Keep dependencies minimal. Prefer standard library and existing utilities.
+- Do not modify CI/CD workflow files unless the ticket explicitly requires it.
+
+Source of truth for rules
+- Upstream: docs/rulez
+- Local summary: this .cursorrules file
+
+How to sync upstream rules
+- Run: node scripts/sync-rulez.mjs
+- In submodule mode (if configured): node scripts/sync-rulez.mjs --mode=submodule

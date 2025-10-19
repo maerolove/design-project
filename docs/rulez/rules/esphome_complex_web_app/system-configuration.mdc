@@ -1,0 +1,70 @@
+---
+description: System configuration protection rules
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# SYSTEM CONFIGURATION PROTECTION RULE
+
+## НЕ ТРОГАЙ СИСТЕМНУЮ КОНФИГУРАЦИЮ
+- **NEVER modify system configuration files** without explicit user permission
+- **NEVER change nginx configuration** files in `/etc/nginx/`
+- **NEVER modify systemd service files** in `/etc/systemd/system/`
+- **NEVER change system configuration** in `/etc/` directory
+- **NEVER rename or move** system configuration files
+- **NEVER disable** system services or configurations
+
+## Forbidden Actions:
+- Modifying `/etc/nginx/conf.d/*.conf` files
+- Changing `/etc/systemd/system/*.service` files
+- Renaming system configuration files
+- Moving system configuration files
+- Disabling system configurations
+- Changing system service configurations
+- Modifying SSL certificates or keys
+- Changing system user configurations
+
+## Allowed Actions:
+- Reading system configuration files for analysis
+- Checking system service status
+- Viewing system logs
+- Testing system configurations
+- Reporting configuration issues to user
+
+## When System Configuration Issues Are Found:
+1. **REPORT the issue** to user with full details
+2. **EXPLAIN the problem** clearly
+3. **SUGGEST solutions** that don't require system changes
+4. **ASK for explicit permission** before any system modifications
+5. **NEVER make changes** without user approval
+
+## Examples of FORBIDDEN Actions:
+```bash
+# НЕПРАВИЛЬНО - изменение системной конфигурации
+sudo mv /etc/nginx/conf.d/00-water.conf /etc/nginx/conf.d/water.conf
+sudo systemctl disable nginx
+sudo chmod 644 /etc/nginx/nginx.conf
+sudo rm /etc/nginx/conf.d/app.kolkhoz.io.conf
+```
+
+## Examples of ALLOWED Actions:
+```bash
+# ПРАВИЛЬНО - только чтение и анализ
+sudo cat /etc/nginx/conf.d/app.kolkhoz.io.conf
+sudo systemctl status nginx
+sudo journalctl -u nginx --lines=20
+sudo nginx -t
+```
+
+## Exception:
+- Only modify system configuration when explicitly requested by user
+- Always ask for confirmation before making any system changes
+- Always explain what will be changed and why
+
+## Reporting System Issues:
+When system configuration problems are found:
+1. **Identify the root cause** without modifying files
+2. **Explain the problem** in detail
+3. **Provide exact commands** user needs to run
+4. **Ask for permission** before executing any system commands
+5. **Never assume** user wants system changes

@@ -1,0 +1,1577 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<filelist>
+  <metadata>
+    <name>ESPHome Web Project</name>
+    <version>2.0.0</version>
+    <description>Web application for ESPHome configuration compilation with Docker integration, caching, and XML-based state machine architecture. Clean structure with separated source code and dependencies, optimized for deployment.</description>
+    <last_updated>2025-09-22</last_updated>
+    <major_changes>
+      <change type="architecture" description="Migrated from JSON to XML-based state machine architecture" />
+      <change type="validation" description="Added XSD schema validation for state machine configuration" />
+      <change type="api" description="Added REST API endpoints for state machine management" />
+      <change type="testing" description="Updated all tests for XML state machine architecture" />
+      <change type="bugfix" description="Fixed state machine transitions in useApiOperations.js and App.jsx" />
+      <change type="bugfix" description="Fixed button activation logic in useButtonStates.js" />
+      <change type="testing" description="Added comprehensive tests for state machine transitions and button states" />
+    </major_changes>
+  </metadata>
+
+  <project_structure>
+    <architecture>Microservices with shared configuration</architecture>
+    <layers>
+      <layer name="Presentation" path="frontend/" description="React-based user interface with Chakra UI" />
+      <layer name="API Gateway" path="backend/main.py" description="FastAPI application with routing and middleware" />
+      <layer name="Business Logic" path="backend/services/" description="Core business logic and service orchestration" />
+      <layer name="Data Access" path="backend/db/" description="Database models and data access layer" />
+      <layer name="Shared Resources" path="common/" description="Shared configuration files and utilities" />
+      <layer name="Infrastructure" path="deployment/" description="Deployment scripts and configuration" />
+    </layers>
+    
+    <module_dependencies>
+      <module name="frontend" dependencies="common/configs/" description="Frontend depends on shared configuration files" />
+      <module name="backend" dependencies="common/configs/, backend/services/, backend/db/" description="Backend orchestrates services and data access" />
+      <module name="services" dependencies="backend/db/, backend/shared/" description="Services use database and shared utilities" />
+      <module name="tests" dependencies="backend/, frontend/, common/" description="Tests cover all application layers" />
+    </module_dependencies>
+
+    <function_contracts>
+      <contract name="loadDefaultConfig" module="frontend/src/App.jsx" description="Automatically loads default ESPHome configuration on page load" />
+      <contract name="create_test_config" module="backend/tests/conftest_helpers.py" description="Creates test configuration by reading from shared default.yaml file" />
+      <contract name="lifespan" module="backend/main.py" description="FastAPI application lifecycle management" />
+      <contract name="health_check" module="backend/main.py" description="System health monitoring endpoint" />
+      <contract name="MainApp" module="frontend/src/App.jsx" description="Main React component with state management" />
+    </function_contracts>
+
+    <data_flow>
+      <flow name="Configuration Loading">
+        <step>User opens frontend</step>
+        <step>MainApp component initializes</step>
+        <step>loadDefaultConfig() reads from common/configs/default.yaml</step>
+        <step>Configuration displayed in YAML editor</step>
+      </flow>
+      <flow name="Test Configuration">
+        <step>Test calls create_test_config()</step>
+        <step>Function reads common/configs/default.yaml</step>
+        <step>Returns configuration for testing</step>
+      </flow>
+      <flow name="ESPHome Compilation">
+        <step>User submits configuration</step>
+        <step>Frontend sends to backend API</step>
+        <step>Backend validates and compiles via Docker</step>
+        <step>Binary returned to user</step>
+      </flow>
+    </data_flow>
+  </project_structure>
+
+  <core_files>
+    <file path="backend/main.py" description="Main FastAPI application entry point" dependencies="backend/services/, backend/db/, backend/shared/">
+      <functions>
+        <function name="lifespan" line="15" description="FastAPI application lifecycle management" 
+                  uses="backend/services/esphome_service.py:25, backend/services/storage_service.py:30" />
+        <function name="health_check" line="45" description="System health monitoring endpoint" 
+                  uses="backend/services/esphome_service.py:50, backend/services/storage_service.py:35" />
+        <function name="create_app" line="60" description="FastAPI application factory" 
+                  uses="backend/services/esphome_service.py:15, backend/services/docker_manager.py:20" />
+      </functions>
+    </file>
+    <file path="backend/esphome.py" description="ESPHome compilation and download endpoints" dependencies="backend/services/esphome_service.py, backend/services/docker_manager.py">
+      <functions>
+        <function name="validate_config" line="25" description="ESPHome configuration validation endpoint" 
+                  uses="backend/services/esphome_service.py:validate_config:45, backend/services/storage_service.py:save_config:60" />
+        <function name="compile_config" line="50" description="ESPHome configuration compilation endpoint" 
+                  uses="backend/services/esphome_service.py:compile_config:80, backend/services/docker_manager.py:run_esphome_command:120" />
+        <function name="download_binary" line="100" description="Binary file download endpoint" 
+                  uses="backend/services/storage_service.py:get_binary_path:90, backend/services/storage/binary_manager.py:get_compiled_binary_path:45" />
+        <function name="get_status" line="150" description="Configuration status endpoint" 
+                  uses="backend/services/esphome_service.py:get_binary_info:200, backend/services/storage/binary_manager.py:get_binary_info:80" />
+      </functions>
+    </file>
+    <file path="backend/api/state_machine.py" description="State machine REST API endpoints" dependencies="backend/shared/state_machine_simplified.py">
+      <functions>
+        <function name="get_state_machine_status" line="25" description="Get current status of all state machines" 
+                  uses="backend/shared/state_machine_xml_manager.py:get_current_states:60, backend/shared/state_machine_xml_manager.py:get_css_classes:70" />
+        <function name="get_machine_status" line="50" description="Get status of specific state machine" 
+                  uses="backend/shared/state_machine_xml_manager.py:get_machine_status:100" />
+        <function name="execute_transition" line="80" description="Execute a state transition" 
+                  uses="backend/shared/state_machine_xml_manager.py:transition:120" />
+        <function name="execute_global_transition" line="120" description="Execute global transition on all machines" 
+                  uses="backend/shared/state_machine_xml_manager.py:global_transition:100" />
+        <function name="reset_all_machines" line="140" description="Reset all state machines to initial states" 
+                  uses="backend/shared/state_machine_xml_manager.py:reset_all_machines:150" />
+        <function name="validate_state_machine" line="160" description="Validate XML state machine configuration" 
+                  uses="backend/shared/state_machine_xml_manager.py:validate_configuration:200" />
+        <function name="get_xml_configuration" line="180" description="Get XML state machine configuration" 
+                  uses="backend/shared/stateMachineSimplified.xml:1" />
+      </functions>
+    </file>
+    <file path="backend/flash.py" description="Device flashing endpoints" dependencies="backend/services/storage_service.py">
+      <functions>
+        <function name="flash_device" line="25" description="Device flashing endpoint" 
+                  uses="backend/services/esphome_service.py:flash_device:300, backend/services/docker_manager.py:run_esphome_command:120" />
+      </functions>
+    </file>
+    <file path="backend/config_routes.py" description="Configuration management endpoints" dependencies="backend/services/config_service.py, backend/services/storage_service.py">
+      <functions>
+        <function name="upload_config" line="30" description="Configuration upload endpoint" 
+                  uses="backend/services/storage_service.py:save_config:60, backend/services/config_service.py:validate_config:40" />
+        <function name="get_config" line="60" description="Configuration retrieval endpoint" 
+                  uses="backend/services/storage_service.py:get_config:80, backend/services/config_service.py:get_config:60" />
+      </functions>
+    </file>
+    <file path="backend/catalog.py" description="Configuration catalog management" dependencies="backend/services/catalog_service.py">
+      <functions>
+        <function name="get_catalog" line="25" description="Configuration catalog endpoint" 
+                  uses="backend/services/catalog_service.py:get_catalog:30, backend/services/storage_service.py:get_shared_files:100" />
+      </functions>
+    </file>
+    <file path="backend/favourites.py" description="User favorites management" dependencies="backend/db/">
+      <functions>
+        <function name="add_favourite" line="25" description="Add favorite configuration" 
+                  uses="backend/db/models.py:Favourite:15, backend/db/database.py:get_session:30" />
+        <function name="get_favourites" line="50" description="Get user favorites" 
+                  uses="backend/db/models.py:Favourite:15, backend/db/database.py:get_session:30" />
+      </functions>
+    </file>
+    <file path="backend/qemu.py" description="QEMU emulation endpoints" dependencies="backend/services/qemu_emulator_service.py">
+      <functions>
+        <function name="start_qemu" line="25" description="Start QEMU emulation" 
+                  uses="backend/services/qemu_emulator_service.py:start_emulation:40, backend/services/docker_manager.py:run_qemu_command:150" />
+        <function name="stop_qemu" line="60" description="Stop QEMU emulation" 
+                  uses="backend/services/qemu_emulator_service.py:stop_emulation:80, backend/services/docker_manager.py:stop_container:180" />
+      </functions>
+    </file>
+    <file path="backend/analytics.py" description="Analytics data collection" dependencies="backend/services/analytics_service.py">
+      <functions>
+        <function name="track_event" line="25" description="Track user event" 
+                  uses="backend/services/analytics_service.py:track_event:30, backend/db/models.py:AnalyticsEvent:20" />
+        <function name="get_analytics" line="50" description="Get analytics data" 
+                  uses="backend/services/analytics_service.py:get_analytics:60, backend/db/database.py:get_session:30" />
+      </functions>
+    </file>
+    <file path="backend/mqtt.py" description="MQTT communication endpoints" dependencies="backend/services/mqtt_service.py">
+      <functions>
+        <function name="publish_message" line="25" description="Publish MQTT message" 
+                  uses="backend/services/mqtt_service.py:publish:40, backend/services/mqtt_service.py:connect:60" />
+        <function name="subscribe_topic" line="50" description="Subscribe to MQTT topic" 
+                  uses="backend/services/mqtt_service.py:subscribe:80, backend/services/mqtt_service.py:connect:60" />
+      </functions>
+    </file>
+    <file path="backend/social.py" description="Social features and sharing" dependencies="backend/services/social_service.py">
+      <functions>
+        <function name="share_config" line="25" description="Share configuration" 
+                  uses="backend/services/social_service.py:share_config:40, backend/services/storage_service.py:save_shared_config:120" />
+        <function name="get_shared_configs" line="50" description="Get shared configurations" 
+                  uses="backend/services/social_service.py:get_shared_configs:60, backend/services/storage_service.py:get_shared_files:100" />
+      </functions>
+    </file>
+    <file path="backend/websocket.py" description="WebSocket communication" dependencies="backend/services/">
+      <functions>
+        <function name="websocket_endpoint" line="25" description="WebSocket connection endpoint" 
+                  uses="backend/services/websocket_service.py:handle_connection:40, backend/services/esphome_service.py:get_status:200" />
+      </functions>
+    </file>
+    <file path="backend/services/esphome_service.py" description="Core ESPHome business logic" dependencies="backend/services/docker_manager.py, backend/services/storage_service.py">
+      <functions>
+        <function name="validate_config" line="45" description="Validate ESPHome configuration" 
+                  uses="backend/services/esphome/validation.py:validate_yaml_content:30, backend/services/docker_manager.py:run_esphome_command:120" />
+        <function name="compile_config" line="80" description="Compile ESPHome configuration" 
+                  uses="backend/services/esphome/compilation.py:compile_config_stream:50, backend/services/docker_manager.py:run_esphome_command:120" />
+        <function name="get_binary_info" line="200" description="Get binary file information" 
+                  uses="backend/services/storage/binary_manager.py:get_binary_info:80, backend/services/storage_service.py:get_binary_path:90" />
+        <function name="flash_device" line="300" description="Flash device with binary" 
+                  uses="backend/services/esphome/management.py:flash_device:40, backend/services/docker_manager.py:run_esphome_command:120" />
+      </functions>
+    </file>
+    <file path="backend/services/docker_manager.py" description="Docker container management for ESPHome compilation" dependencies="backend/utils/">
+      <functions>
+        <function name="run_esphome_command" line="120" description="Run ESPHome command in Docker" 
+                  uses="backend/utils/docker_utils.py:create_container:30, backend/utils/docker_utils.py:execute_command:60" />
+        <function name="run_qemu_command" line="150" description="Run QEMU command in Docker" 
+                  uses="backend/utils/docker_utils.py:create_container:30, backend/utils/docker_utils.py:execute_command:60" />
+        <function name="stop_container" line="180" description="Stop Docker container" 
+                  uses="backend/utils/docker_utils.py:stop_container:90, backend/utils/docker_utils.py:remove_container:120" />
+      </functions>
+    </file>
+    <file path="backend/services/storage_service.py" description="File storage utilities" dependencies="backend/config_manager.py">
+      <functions>
+        <function name="save_config" line="60" description="Save configuration file" 
+                  uses="backend/services/storage/binary_manager.py:save_config:100, backend/config.py:get_settings:130" />
+        <function name="get_config" line="80" description="Get configuration file" 
+                  uses="backend/services/storage/binary_manager.py:get_config:120, backend/config.py:get_settings:130" />
+        <function name="get_binary_path" line="90" description="Get binary file path" 
+                  uses="backend/services/storage/binary_manager.py:get_compiled_binary_path:45, backend/config.py:get_settings:130" />
+        <function name="save_shared_config" line="120" description="Save shared configuration" 
+                  uses="backend/services/storage/binary_manager.py:save_shared_config:140, backend/config.py:get_settings:130" />
+        <function name="get_shared_files" line="100" description="Get shared files" 
+                  uses="backend/services/storage/binary_manager.py:get_shared_files:160, backend/config.py:get_settings:130" />
+      </functions>
+    </file>
+    <file path="backend/services/qemu_emulator_service.py" description="QEMU emulation service" dependencies="backend/services/storage_service.py">
+      <functions>
+        <function name="start_emulation" line="40" description="Start QEMU emulation" 
+                  uses="backend/services/docker_manager.py:run_qemu_command:150, backend/services/storage_service.py:get_binary_path:90" />
+        <function name="stop_emulation" line="80" description="Stop QEMU emulation" 
+                  uses="backend/services/docker_manager.py:stop_container:180, backend/services/storage_service.py:cleanup_temp_files:200" />
+      </functions>
+    </file>
+    <file path="backend/services/analytics_service.py" description="Analytics data processing" dependencies="backend/db/">
+      <functions>
+        <function name="track_event" line="30" description="Track analytics event" 
+                  uses="backend/db/models.py:AnalyticsEvent:20, backend/db/database.py:get_session:30" />
+        <function name="get_analytics" line="60" description="Get analytics data" 
+                  uses="backend/db/models.py:AnalyticsEvent:20, backend/db/database.py:get_session:30" />
+      </functions>
+    </file>
+    <file path="backend/services/mqtt_service.py" description="MQTT communication service" dependencies="backend/db/">
+      <functions>
+        <function name="connect" line="60" description="Connect to MQTT broker" 
+                  uses="backend/utils/mqtt_utils.py:create_client:30, backend/config.py:get_settings:130" />
+        <function name="publish" line="40" description="Publish MQTT message" 
+                  uses="backend/utils/mqtt_utils.py:publish_message:60, backend/services/mqtt_service.py:connect:60" />
+        <function name="subscribe" line="80" description="Subscribe to MQTT topic" 
+                  uses="backend/utils/mqtt_utils.py:subscribe_topic:90, backend/services/mqtt_service.py:connect:60" />
+      </functions>
+    </file>
+    <file path="backend/database.py" description="Database connection and models" dependencies="backend/db/">
+      <functions>
+        <function name="get_session" line="30" description="Get database session" 
+                  uses="backend/db/models.py:Base:10, backend/config.py:get_settings:130" />
+        <function name="init_db" line="50" description="Initialize database" 
+                  uses="backend/db/models.py:Base:10, backend/alembic/env.py:run_migrations:25" />
+      </functions>
+    </file>
+    <file path="backend/settings.py" description="Application settings and configuration" dependencies="">
+      <functions>
+        <function name="get_settings" line="130" description="Get application settings" 
+                  uses="backend/filelist_config.py:get_filelist_config:100, backend/config.py:Settings.__init__:61" />
+      </functions>
+    </file>
+    <file path="backend/constants.py" description="Application constants including ESPHome version" dependencies="">
+      <functions>
+        <function name="get_esphome_version" line="15" description="Get ESPHome version" 
+                  uses="backend/config.py:get_settings:130" />
+      </functions>
+    </file>
+    <file path="backend/utils/logger_config.py" description="Centralized logging configuration" dependencies="">
+      <functions>
+        <function name="setup_logging" line="25" description="Setup application logging" 
+                  uses="backend/config.py:get_settings:130, backend/utils/logger_config.py:configure_logger:40" />
+        <function name="get_logger" line="60" description="Get logger instance" 
+                  uses="backend/utils/logger_config.py:setup_logging:25" />
+      </functions>
+    </file>
+    <file path="backend/utils/" description="Utility functions and helpers" dependencies="">
+      <functions>
+        <function name="validate_yaml" line="30" description="Validate YAML content" 
+                  uses="backend/utils/validation.py:validate_syntax:40, backend/utils/validation.py:validate_schema:60" />
+        <function name="format_error" line="50" description="Format error message" 
+                  uses="backend/utils/error_handler.py:format_exception:30, backend/utils/error_handler.py:log_error:50" />
+      </functions>
+    </file>
+    <file path="backend/utils/esphome_log_parser.py" description="Единый парсер логов ESPHome для всех операций" dependencies="backend/contracts/service_contracts.py">
+      <functions>
+        <function name="parse_logs" line="25" description="Парсит логи ESPHome из stdout и stderr в единый формат" 
+                  uses="backend/contracts/service_contracts.py:OperationLogs:98" />
+        <function name="format_logs_for_ui" line="80" description="Форматирует логи для отображения в UI" 
+                  uses="backend/contracts/service_contracts.py:OperationLogs:get_all_logs:118" />
+        <function name="classify_log_line" line="60" description="Классифицирует строку лога по типу" 
+                  uses="backend/utils/esphome_log_parser.py:LOG_PATTERNS:15" />
+      </functions>
+    </file>
+    <file path="backend/schemas/" description="Pydantic schemas for API validation" dependencies="">
+      <functions>
+        <function name="validate_request" line="25" description="Validate API request" 
+                  uses="backend/schemas/esphome.py:ConfigRequest:15, backend/schemas/esphome.py:CompileRequest:30" />
+      </functions>
+    </file>
+    <file path="backend/models/" description="Database models and ORM definitions" dependencies="backend/db/">
+      <functions>
+        <function name="create_tables" line="20" description="Create database tables" 
+                  uses="backend/db/models.py:Base:10, backend/database.py:init_db:50" />
+      </functions>
+    </file>
+    <file path="backend/routers/" description="API route handlers and endpoints" dependencies="backend/services/">
+      <functions>
+        <function name="register_routes" line="25" description="Register API routes" 
+                  uses="backend/main.py:create_app:60, backend/esphome.py:validate_config:25" />
+      </functions>
+    </file>
+    <file path="backend/shared/stateMachineSimplified.xml" description="XML-based state machine configuration" dependencies="">
+      <functions>
+        <function name="stateMachine" description="Root XML element containing all state machines" />
+        <function name="machine" description="Individual state machine definition" />
+        <function name="states" description="State definitions with types and values" />
+        <function name="transitions" description="Transition definitions with types" />
+        <function name="stateTransitions" description="State transition mappings" />
+      </functions>
+    </file>
+    <file path="backend/shared/stateMachineSchema.xsd" description="XSD schema for state machine validation" dependencies="backend/shared/stateMachineSimplified.xml">
+      <functions>
+        <function name="validate_state_machine" description="Validates XML state machine configuration" />
+        <function name="enforce_types" description="Enforces state and transition type constraints" />
+      </functions>
+    </file>
+    <file path="backend/shared/state_machine_xml.py" description="XML state machine parser and validator" dependencies="backend/shared/stateMachineSimplified.xml, backend/shared/stateMachineSchema.xsd">
+      <functions>
+        <function name="StateMachineXMLParser" line="25" description="Parses XML state machine configuration" />
+        <function name="parse" line="45" description="Parse XML configuration and validate" />
+        <function name="validate_state_machine" line="200" description="Validate state machine configuration" />
+        <function name="get_machine" line="80" description="Get machine by type" />
+        <function name="can_transition" line="120" description="Check if transition is allowed" />
+      </functions>
+    </file>
+    <file path="backend/shared/state_machine_xml_manager.py" description="XML state machine manager" dependencies="backend/shared/state_machine_xml.py">
+      <functions>
+        <function name="XMLStateMachineManager" line="30" description="Manages multiple XML state machines" />
+        <function name="get_machine" line="60" description="Get state machine by type" />
+        <function name="global_transition" line="100" description="Execute global transition" />
+        <function name="get_combined_state" line="150" description="Get combined state of all machines" />
+        <function name="validate_configuration" line="200" description="Validate XML configuration" />
+      </functions>
+    </file>
+    <file path="backend/shared/state_machine_simplified.py" description="Simplified state machine interface (updated for XML)" dependencies="backend/shared/state_machine_xml_manager.py">
+      <functions>
+        <function name="get_state_machine_manager" line="25" description="Get XML state machine manager instance" />
+        <function name="get_machine" line="40" description="Get XML state machine by type" />
+        <function name="global_transition" line="58" description="Execute transition on all applicable machines" />
+        <function name="validate_state_machine" line="101" description="Validate XML state machine configuration" />
+      </functions>
+    </file>
+    <file path="backend/shared/stateMachineSimplified.json" description="Simplified state machine configuration" dependencies="">
+      <functions>
+        <function name="load_states" line="1" description="Load state machine states" 
+                  uses="backend/shared/state_machine_simplified.py:StateMachine:20" />
+      </functions>
+    </file>
+    <file path="backend/shared/state_machine_simplified.py" description="Python state machine implementation" dependencies="backend/shared/stateMachineSimplified.json">
+      <functions>
+        <function name="StateMachine.__init__" line="20" description="Initialize state machine" 
+                  uses="backend/shared/stateMachineSimplified.json:load_states:1, backend/utils/logger_config.py:get_logger:60" />
+        <function name="StateMachine.transition" line="50" description="Transition between states" 
+                  uses="backend/shared/state_machine_simplified.py:StateMachine.__init__:20" />
+      </functions>
+    </file>
+    <file path="backend/shared/types/stateMachineSimplified.js" description="JavaScript state machine implementation" dependencies="backend/shared/stateMachineSimplified.json">
+      <functions>
+        <function name="StateMachine" line="15" description="JavaScript state machine class" 
+                  uses="backend/shared/stateMachineSimplified.json:load_states:1" />
+      </functions>
+    </file>
+    <file path="backend/alembic/" description="Database migration scripts" dependencies="backend/db/">
+      <functions>
+        <function name="run_migrations" line="25" description="Run database migrations" 
+                  uses="backend/database.py:get_session:30, backend/db/models.py:Base:10" />
+      </functions>
+    </file>
+    <file path="backend/FastSession/" description="FastAPI session management" dependencies="">
+      <functions>
+        <function name="create_session" line="20" description="Create user session" 
+                  uses="backend/config.py:get_settings:130, backend/FastSession/session.py:Session:15" />
+      </functions>
+    </file>
+  </core_files>
+
+  <frontend_files>
+    <file path="frontend/App.jsx" description="Main React application component with default ESPHome configuration initialization" dependencies="frontend/src/hooks/, frontend/src/components/, common/configs/" />
+    <file path="frontend/App.minimal.jsx" description="Minimal App component version" dependencies="frontend/src/hooks/" />
+    <file path="frontend/App.css" description="Main application styles" dependencies="" />
+    <file path="frontend/index.js" description="React application entry point" dependencies="frontend/App.jsx" />
+    <file path="frontend/theme.js" description="Chakra UI theme configuration" dependencies="" />
+    <file path="frontend/components/" description="React components directory" dependencies="frontend/src/hooks/, frontend/src/services/" />
+    <file path="frontend/components/LogDisplay.jsx" description="Универсальный компонент для отображения логов ESPHome" dependencies="frontend/src/utils/logUtils.js" />
+    <file path="frontend/hooks/" description="Custom React hooks" dependencies="frontend/src/services/" />
+    <file path="frontend/src/hooks/__tests__/useButtonStates.test.js" description="Tests for button state logic and XML state machine compliance" dependencies="frontend/src/hooks/useButtonStates.js, frontend/src/hooks/useStateMachine.js" />
+    <file path="frontend/src/hooks/__tests__/useApiOperations.test.js" description="Tests for API operations and state machine transitions" dependencies="frontend/src/hooks/useApiOperations.js, frontend/src/hooks/useStateMachine.js" />
+    <file path="frontend/src/shared/types/__tests__/stateMachine.test.js" description="Tests for state machine transitions and XML schema compliance" dependencies="frontend/src/shared/types/stateMachine.js, backend/shared/stateMachineSimplified.xml" />
+    <file path="frontend/services/" description="API and service layer" dependencies="" />
+    <file path="frontend/utils/" description="Frontend utility functions" dependencies="" />
+    <file path="frontend/utils/logUtils.js" description="Единые утилиты для обработки логов ESPHome во фронтенде" dependencies="" />
+    <file path="frontend/config/" description="Frontend configuration including default ESPHome YAML template" dependencies="" />
+    <file path="frontend/public/" description="Public static assets" dependencies="" />
+  </frontend_files>
+
+  <shared_files>
+    <file path="common/configs/default.yaml" description="Shared default ESPHome configuration used by both frontend and backend" dependencies="" />
+  </shared_files>
+
+  <configuration_files>
+    <file path="frontend/package.json" description="Node.js project configuration and dependencies" />
+    <file path="frontend/package-lock.json" description="Node.js dependency lock file" />
+    <file path="deployment/scripts/Makefile" description="Build automation and project commands" />
+    <file path="FILELIST" description="Project structure documentation in XML format" />
+    <file path="backend/main.py" description="Python application entry point" />
+    <file path="deployment/docker/docker-compose.debug.yaml" description="Docker debug configuration" />
+    <file path="deployment/config/playwright.config.cjs" description="Playwright test configuration" />
+    <file path="data/env/config/.env.example" description="Environment variables example" />
+    <file path="backend/Dockerfile-backend" description="Backend Docker image" />
+    <file path="backend/alembic/env.py" description="Alembic environment configuration" />
+    <file path="backend/requirements.txt" description="Python dependencies" />
+    <file path="backend/requirements-test.txt" description="Python test dependencies" />
+    <file path="backend/requirements_minimal.txt" description="Minimal Python dependencies" />
+    <file path="backend/git_requirements.txt" description="Git-based Python dependencies" />
+    <file path="deployment/docker/docker-compose.yaml" description="Docker services configuration" />
+    <file path="deployment/docker/Dockerfile-frontend-dev" description="Frontend development Docker image" />
+    <file path="deployment/docker/Dockerfile-frontend" description="Frontend production Docker image" />
+    <file path="deployment/docker/Dockerfile-frontend-runtime" description="Frontend runtime Docker image" />
+    <file path="deployment/docker/Dockerfile.qemu-esp32" description="QEMU ESP32 Docker image" />
+    <file path="deployment/docker/docker-compose.override.yml" description="Docker override configuration" />
+    <file path="deployment/docker/docker-compose.production.yml" description="Production Docker configuration" />
+    <file path="deployment/docker/docker-compose.test.yml" description="Test Docker configuration" />
+    <file path="deployment/config/vite.config.js" description="Frontend build configuration" />
+    <file path="deployment/config/vitest.config.js" description="Vitest test configuration" />
+    <file path="deployment/config/vitest.integration.config.js" description="Integration test configuration" />
+    <file path="deployment/config/vitest.global-setup.js" description="Global test setup" />
+    <file path="deployment/config/vitest.global-teardown.js" description="Global test teardown" />
+    <file path="deployment/config/playwright.config.cjs" description="Playwright test configuration" />
+    <file path="deployment/config/jest.config.js" description="Jest test configuration" />
+    <file path="deployment/config/babel.config.js" description="Babel configuration" />
+    <file path="deployment/config/alembic.ini" description="Database migration configuration" />
+    <file path="deployment/config/pytest.ini" description="Pytest configuration" />
+    <file path="deployment/config/pyproject.toml" description="Python project configuration" />
+    <file path="deployment/config/poetry.lock" description="Poetry dependency lock file" />
+    <file path=".gitignore" description="Git ignore rules" />
+    <file path=".dockerignore" description="Docker ignore rules" />
+  </configuration_files>
+
+  <deployment_files>
+    <file path="deployment/ansible/" description="Ansible deployment automation" />
+    <file path="deployment/docker/" description="Docker configurations and images" />
+    <file path="deployment/scripts/" description="Deployment and automation scripts" />
+    <file path="deployment/nginx/" description="Nginx configuration files" />
+    <file path="deployment/systemd/" description="Systemd service configurations" />
+    <file path="deployment/quick_deploy.sh" description="Quick deployment script" />
+    <file path="deployment/manual_deploy.sh" description="Manual deployment script" />
+    <file path="deployment/setup_server.sh" description="Server setup script" />
+    <file path="deployment/configure_env.sh" description="Environment configuration script" />
+    <file path="deployment/install_missing_centos.sh" description="CentOS missing packages installer" />
+  </deployment_files>
+
+  <documentation_files>
+    <file path="docs/README.md" description="Main project documentation" />
+    <file path="docs/BACKEND_README.md" description="Backend documentation" />
+    <file path="docs/SECURITY_CONFIG.md" description="Security configuration" />
+    <file path="docs/API_DOCUMENTATION.md" description="API endpoints documentation" />
+    <file path="docs/ARCHITECTURE_OVERVIEW.md" description="Architecture overview" />
+    <file path="docs/COMPONENT_DOCUMENTATION.md" description="Component documentation" />
+    <file path="docs/CONTRACTS_DOCUMENTATION.md" description="Contracts documentation" />
+    <file path="docs/DOCUMENTATION_INDEX.md" description="Documentation index" />
+    <file path="docs/PERFORMANCE_OPTIMIZATION.md" description="Performance optimization" />
+    <file path="docs/REFACTORING_REPORT.md" description="Refactoring report" />
+    <file path="docs/ARCHITECTURE_IMPROVEMENTS_COMPLETE.md" description="Architecture improvements" />
+    <file path="docs/CLEANUP_REPORT.md" description="Cleanup report" />
+    <file path="docs/COMPLETE_WORK_SUMMARY.md" description="Complete work summary" />
+    <file path="docs/FINAL_STATUS_REPORT.md" description="Final status report" />
+    <file path="docs/development/TESTING_PRINCIPLES.md" description="Testing principles and guidelines" />
+    <file path="docs/deployment/DEPLOYMENT.md" description="Deployment guide" />
+    <file path="docs/archive/" description="Archived documentation" />
+    <file path="docs/App.original.jsx" description="Original App component backup" />
+    <file path="docs/App.refactored.jsx" description="Refactored App component backup" />
+    <file path="docs/App.simplified.jsx" description="Simplified App component backup" />
+  </documentation_files>
+
+  <test_files>
+    <file path="backend/tests/conftest.py" description="Pytest configuration and fixtures" dependencies="backend/tests/conftest_helpers.py, backend/tests/conftest_base.py" />
+    <file path="backend/tests/api/test_compile.py" description="API compilation tests" dependencies="backend/tests/conftest.py, backend/services/" />
+    <file path="backend/tests/api/test_compile_simple.py" description="Simplified API compilation tests" dependencies="backend/tests/conftest.py, backend/services/" />
+    <file path="backend/tests/api/test_cache.py" description="ESPHome cache functionality tests" dependencies="backend/tests/conftest.py, backend/services/cache_service.py" />
+    <file path="backend/tests/api/test_validation.py" description="API validation tests" dependencies="backend/tests/conftest.py, backend/services/esphome_service.py" />
+    <file path="backend/tests/api/test_download.py" description="API download tests" dependencies="backend/tests/conftest.py, backend/services/storage_service.py" />
+    <file path="backend/tests/e2e/tests/compile.spec.cjs" description="End-to-end compilation tests" dependencies="frontend/, backend/" />
+    <file path="backend/tests/e2e/tests/validation.spec.cjs" description="End-to-end validation tests" dependencies="frontend/, backend/" />
+    <file path="backend/tests/e2e/tests/basic-loading.spec.cjs" description="E2E test for automatic default config loading" dependencies="frontend/, common/configs/" />
+    <file path="backend/tests/test-results/" description="Test execution results" />
+    <file path="backend/tests/playwright-report/" description="Playwright test reports" />
+    <file path="backend/tests/test_deterministic.py" description="Deterministic test validation" />
+    <file path="backend/tests/test_docker_manager_v2.py" description="Docker manager tests" />
+    <file path="backend/tests/test_qemu_direct.py" description="QEMU direct tests" />
+    <file path="backend/tests/test_qemu_real_log.py" description="QEMU real log tests" />
+    <file path="backend/tests/test_qemu_with_existing_firmware.py" description="QEMU firmware tests" />
+    <file path="backend/tests/test_simple_compilation.py" description="Simple compilation tests" />
+    <file path="backend/tests/test_working_compilation.py" description="Working compilation tests" />
+    <file path="backend/tests/integration_test.spec.cjs" description="Integration test specification" />
+    <file path="backend/tests/test-results.json" description="Test results JSON" />
+    <file path="backend/tests/shared_files/" description="Test shared files" />
+    <file path="backend/tests/uploaded_files/" description="Test uploaded files" />
+    <file path="backend/tests/test_app.py" description="Basic application tests" />
+    <file path="backend/tests/test_docker_manager_v2.py" description="Docker manager tests" />
+    <file path="backend/tests/run_tests.py" description="Test runner script" />
+    <file path="backend/tests/run_new_tests.py" description="New test runner script" />
+    <file path="backend/tests/conftest_helpers.py" description="Test helper functions and utilities" dependencies="common/configs/default.yaml" />
+    <file path="backend/tests/conftest_base.py" description="Base test configuration and shared fixtures" dependencies="backend/shared/" />
+    <file path="backend/tests/conftest_fixtures.py" description="Test fixture definitions" dependencies="backend/tests/conftest_helpers.py" />
+  </test_files>
+
+  <data_files>
+    <file path="data/uploaded_files/" description="User uploaded configuration files" 
+          used_in="backend/services/storage_service.py:25, backend/config.py:66" />
+    <file path="data/shared_files/" description="Shared configuration files" 
+          used_in="backend/config.py:67, frontend/App.jsx:108" />
+    <file path="data/shared_files/catalog/" description="Configuration catalog files" 
+          used_in="backend/services/catalog_service.py:15" />
+    <file path="data/shared_files/schema.json" description="JSON schema for configurations" 
+          used_in="frontend/components/ConfigForm.jsx:25" />
+    <file path="data/shared_files/uiSchema.json" description="UI schema for form generation" 
+          used_in="frontend/components/ConfigForm.jsx:26" />
+    <file path="data/private/" description="Private configuration files" 
+          used_in="backend/services/storage_service.py:30" />
+    <file path="data/storage/" description="Application storage" 
+          used_in="backend/database.py:15, backend/config.py:72" />
+    <file path="data/storage/esphome_web.db" description="Main application database" 
+          used_in="backend/database.py:20, backend/alembic/env.py:15" />
+    <file path="data/analytics/" description="Usage analytics data" 
+          used_in="backend/services/analytics_service.py:25" />
+    <file path="data/cache/" description="Application cache and temporary files" 
+          used_in="backend/services/esphome/compilation.py:175, backend/config.py:70" />
+    <file path="data/build/" description="ESPHome build files and compilation output" 
+          used_in="backend/services/esphome_service.py:45, backend/config.py:72" />
+    <file path="data/build/compile/" description="Temporary compilation files" 
+          used_in="backend/services/esphome/compilation.py:87" />
+    <file path="data/compile_files/" description="Compiled firmware files" 
+          used_in="backend/services/esphome/compilation.py:176, backend/services/storage/binary_manager.py:25, backend/config.py:68" />
+    <file path="data/compile_files_ota/" description="OTA compiled files" 
+          used_in="backend/services/storage/binary_manager.py:26" />
+    <file path="data/compile_ota/" description="OTA compilation directory" 
+          used_in="backend/services/esphome/compilation.py:230, backend/config.py:69" />
+    <file path="data/build/static/" description="Static build assets" 
+          used_in="deployment/nginx/app.kolkhoz.io.conf:25" />
+    <file path="data/build/index.html" description="Main HTML file" 
+          used_in="deployment/nginx/app.kolkhoz.io.conf:20" />
+    <file path="data/build/asset-manifest.json" description="Asset manifest" 
+          used_in="frontend/build.js:15" />
+    <file path="data/env/" description="Environment configurations and dependencies" 
+          used_in="backend/config.py:72" />
+    <file path="data/env/config/" description="Environment configuration files" 
+          used_in="backend/settings.py:15, deployment/scripts/setup_env.sh:10" />
+    <file path="data/env/logs/" description="Environment logs" 
+          used_in="backend/utils/logger_config.py:25" />
+    <file path="data/env/node_modules/" description="Node.js modules and dependencies" 
+          used_in="frontend/package.json:5, deployment/docker/Dockerfile-frontend:15" />
+    <file path="data/env/.mypy_cache/" description="MyPy type checking cache" 
+          used_in="deployment/scripts/check_types.py:10" />
+    <file path="data/env/venv/" description="Python virtual environment" 
+          used_in="backend/requirements.txt:5, deployment/docker/Dockerfile-backend:15" />
+    <file path="data/env/config/.env" description="Environment variables configuration" 
+          used_in="backend/settings.py:20, deployment/scripts/configure_env.sh:15" />
+    <file path="data/env/config/.env.example" description="Environment variables example template" 
+          used_in="deployment/scripts/setup_server.sh:25" />
+    <file path="data/logs/" description="Application logs" 
+          used_in="backend/utils/logger_config.py:30, deployment/systemd/esphome-backend.service:15" />
+    <file path="data/env/FastSession/" description="FastSession library" 
+          used_in="backend/FastSession/session.py:10" />
+    <file path="data/temp/" description="Temporary files for compilation" 
+          used_in="backend/services/esphome/compilation.py:216, backend/config.py:71" />
+    <file path="data/" description="Main data directory" 
+          used_in="backend/config.py:69, backend/services/storage_service.py:25" />
+  </data_files>
+
+  <deployment_scripts>
+    <file path="deployment/scripts/sync_dev.sh" description="Development synchronization script" />
+    <file path="deployment/scripts/sync_to_server.sh" description="Server synchronization script" />
+    <file path="deployment/scripts/reorganize_project.sh" description="Project reorganization script" />
+    <file path="deployment/scripts/analyze_project.py" description="Project analysis script" />
+    <file path="deployment/scripts/check_structure.py" description="Structure validation script" />
+    <file path="deployment/scripts/format_and_check.py" description="Code formatting and checking script" />
+    <file path="deployment/scripts/check_coverage.py" description="Test coverage checking script" />
+    <file path="deployment/scripts/setup_dev.sh" description="Development environment setup script" />
+    <file path="deployment/scripts/testBackendManager.js" description="Backend manager testing script" />
+    <file path="deployment/scripts/check_api_url.js" description="API URL validation script" />
+    <file path="deployment/scripts/root/" description="Root level automation scripts" />
+    <file path="deployment/scripts/Makefile" description="Build automation and project commands" />
+    <file path="deployment/scripts/refactoring_suggestions.py" description="Code refactoring analysis script" />
+    <file path="deployment/scripts/semantic_anchors.py" description="Semantic anchors extraction script" />
+    <file path="deployment/scripts/init_db.py" description="Database initialization script" />
+    <file path="deployment/scripts/frontend-tests/" description="Frontend test files and utilities" />
+  </deployment_scripts>
+
+  <current_issues>
+    <issue id="ota_download_404" description="OTA binary download returns 404 error" status="resolved" />
+    <issue id="docker_setup" description="Docker backend connection issues" status="resolved" />
+    <issue id="async_calls" description="Some async calls missing await" status="resolved" />
+    <issue id="qemu_service" description="QEMU emulation service not working" status="resolved" />
+    <issue id="temp_files_cleanup" description="Temporary files cleanup (__pycache__, .pyc, .DS_Store)" status="resolved" />
+    <issue id="dependencies_placement" description="Dependencies placement optimization (venv and node_modules moved to data/env/)" status="resolved" />
+    <issue id="gitignore_update" description="Gitignore rules update for new structure" status="resolved" />
+    <issue id="project_structure_optimization" description="Project structure optimization for deployment" status="resolved" />
+    <issue id="stateless_optimization" description="Stateless part optimization (py/, src/, deployment/)" status="resolved" />
+    <issue id="systemd_setup" description="Systemd service configuration and environment setup" status="resolved" />
+    <issue id="python_venv_setup" description="Python virtual environment setup in data/env/venv/" status="resolved" />
+    <issue id="env_config_setup" description="Environment configuration setup in data/env/config/" status="resolved" />
+    <issue id="python_imports_compliance" description="Python imports compliance with project rules - relative imports (from ..) replaced with absolute imports" status="resolved" />
+    <issue id="useless_tests_compliance" description="Useless tests compliance - tests with assert response.status in [200, 500] replaced with specific assertions" status="resolved" />
+    <issue id="sqlite_removal_from_tests" description="SQLite removal from test configuration - using file-based storage as per project architecture" status="resolved" />
+    <issue id="validate_endpoint_verification" description="Validate endpoint verification - confirmed working correctly with POST requests (200 OK), GET requests return 405 Method Not Allowed (normal behavior)" status="resolved" />
+    <issue id="httptesthelper_session_fix" description="HTTPTestHelper session management - fixed async/await issues and session cookies" status="resolved" />
+    <issue id="binary_manager_config_path" description="Binary manager config path resolution - all paths now read from FILELIST XML" status="resolved" />
+    <issue id="xml_path_centralization" description="Centralized path management - all services now use XML parser instead of hardcoded paths" status="resolved" />
+    <issue id="docker_manager_api_fix" description="DockerManager API - fixed incorrect parameters in validation service" status="resolved" />
+    <issue id="yaml_syntax_errors" description="YAML syntax errors in test configurations - fixed indentation issues" status="resolved" />
+    <issue id="validation_response_structure" description="API response structure mismatch - some tests expect different response format" status="in_progress" />
+    <issue id="unified_log_system" description="Единая система логов без дублирования кода" status="resolved" />
+    <issue id="log_display_unification" description="Унификация отображения логов во фронтенде" status="resolved" />
+    <issue id="log_parsing_centralization" description="Централизация парсинга логов ESPHome" status="resolved" />
+  </current_issues>
+
+  <project_structure>
+    <root_directories>
+      <directory name="data" size="5.5GB" description="All data, cache, environments, uploaded files, and dependencies (venv, node_modules)" />
+      <directory name="backend" size="4.2MB" description="Backend Python source code (clean, without dependencies)" />
+      <directory name="frontend" size="1.2MB" description="Frontend React source code (clean, without dependencies)" />
+      <directory name="deployment" size="1.0MB" description="Deployment configurations, Docker, scripts, and automation" />
+      <directory name="docs" size="328KB" description="Project documentation and backup files" />
+    </root_directories>
+    <optimization_status>
+      <status>completed</status>
+      <temp_files_cleaned>true</temp_files_cleaned>
+      <dependencies_optimized>true</dependencies_optimized>
+      <gitignore_updated>true</gitignore_updated>
+      <deployment_ready>true</deployment_ready>
+    </optimization_status>
+  </project_structure>
+
+  <semantic_anchors>
+    <anchor name="OTA_DOWNLOAD_LOGIC" file="backend/esphome.py" line="150" context="OTA binary download endpoint with fallback search" />
+    <anchor name="BINARY_INFO_SERVICE" file="backend/services/esphome_service.py" line="50" context="Async binary info retrieval with comprehensive search" />
+    <anchor name="STORAGE_SERVICE" file="backend/services/storage_service.py" line="30" context="File storage utilities and path resolution" />
+    <anchor name="DOCKER_SETUP" file="deployment/docker/docker-compose.yaml" line="30" context="Backend service configuration with database dependencies" />
+    <anchor name="QEMU_SERVICE" file="backend/services/qemu_emulator_service.py" line="26" context="QEMU ESP32 emulation service with Docker integration" />
+    <anchor name="QEMU_API" file="backend/qemu.py" line="25" context="QEMU emulation API endpoints with session management" />
+    <anchor name="QEMU_SCHEMAS" file="backend/schemas/qemu.py" line="8" context="Pydantic schemas for QEMU emulation API" />
+    <anchor name="DEPLOYMENT_SCRIPTS" file="deployment/scripts/root/run_tests.sh" line="1" context="Test execution automation scripts" />
+    <anchor name="BUILD_OUTPUT" file="data/compile_files/" line="1" context="ESPHome compilation output directory" />
+    <anchor name="ENVIRONMENT_CONFIG" file="data/env/config/" line="1" context="Environment-specific configuration files" />
+    <anchor name="TEST_RESULTS" file="backend/tests/test-results/" line="1" context="Test execution results and reports" />
+    <anchor name="DOCUMENTATION_CENTER" file="docs/README.md" line="1" context="Centralized project documentation" />
+    <anchor name="DATA_ORGANIZATION" file="data/" line="1" context="Unified data storage for all application data" />
+  </semantic_anchors>
+
+  <default_configuration>
+    <file path="frontend/src/config/index.js" description="Default ESPHome YAML configuration template" />
+    <location>Lines 54-74: config.ui.defaultConfig</location>
+    <structure>
+      <esphome>
+        <name>smart-home-device</name>
+        <friendly_name>Smart Home Device</friendly_name>
+      </esphome>
+      <esp32>
+        <board>esp32doit-devkit-v1</board>
+        <framework>
+          <type>arduino</type>
+        </framework>
+      </esp32>
+      <wifi>
+        <ssid>!secret wifi_ssid</ssid>
+        <password>!secret wifi_password</password>
+      </wifi>
+      <api>encryption key: !secret api_key</api>
+      <ota>password: !secret ota_password</ota>
+      <logger>enabled</logger>
+      <switch>GPIO2 Test Switch</switch>
+      <sensor>WiFi Signal sensor</sensor>
+    </structure>
+    <usage>
+      <initialization>App.jsx lines 108-138: Loaded when no config found</initialization>
+      <new_config>App.jsx lines 156-186: Used when creating new configuration</new_config>
+      <fallback>App.jsx lines 144-174: Used when config loading fails</fallback>
+    </usage>
+    <status>IMPLEMENTED - Default ESPHome configuration now loads automatically</status>
+  </default_configuration>
+
+  <architecture_analysis>
+    <component_status>
+      <component name="Backend Core" status="stable" description="FastAPI application with proper service orchestration" />
+      <component name="Services Layer" status="stable" description="Business logic services with proper separation of concerns" />
+      <component name="Storage System" status="stable" description="File-based storage with XML-based path resolution" />
+      <component name="Docker Integration" status="stable" description="ESPHome compilation via Docker containers" />
+      <component name="Session Management" status="stable" description="HTTPTestHelper properly manages session cookies" />
+      <component name="Binary Manager" status="stable" description="Config path resolution works via XML parser" />
+      <component name="Test Infrastructure" status="stable" description="Pytest with proper async/await support" />
+      <component name="Path Management" status="stable" description="Centralized XML-based path management" />
+      <component name="API Validation" status="working" description="ESPHome validation via Docker with proper error handling" />
+    </component_status>
+    
+    <architectural_patterns>
+      <pattern name="Microservices" description="Services are loosely coupled with clear interfaces" />
+      <pattern name="Dependency Injection" description="Services use DI container for proper dependency management" />
+      <pattern name="Repository Pattern" description="Data access layer abstracts storage implementation" />
+      <pattern name="Service Layer" description="Business logic encapsulated in service classes" />
+      <pattern name="Async/Await" description="Non-blocking I/O operations throughout the system" />
+      <pattern name="Configuration Centralization" description="All paths managed through FILELIST XML parser" />
+      <pattern name="Error Handling" description="Consistent error handling patterns across services" />
+    </architectural_patterns>
+    
+    <data_flow_integrity>
+      <flow name="Configuration Processing" status="working" description="Config → Validation → Storage → Compilation → Binary" />
+      <flow name="Session Management" status="working" description="Single session across all requests in tests" />
+      <flow name="File Storage" status="working" description="Configs stored in user-specific directories via XML paths" />
+      <flow name="Binary Generation" status="working" description="ESPHome compilation produces binaries" />
+      <flow name="Binary Retrieval" status="working" description="Binary manager finds config files via XML paths" />
+      <flow name="Path Resolution" status="working" description="All services use centralized XML path management" />
+      <flow name="API Validation" status="working" description="ESPHome validation with proper Docker integration" />
+    </data_flow_integrity>
+  </architecture_analysis>
+
+  <critical_rules>
+    <rule id="NO_NEW_FILES" priority="CRITICAL" description="ЗАПРЕЩЕНО СОЗДАВАТЬ НОВЫЕ ФАЙЛЫ - ТОЛЬКО РЕДАКТИРОВАТЬ СУЩЕСТВУЮЩИЕ" />
+    <rule id="FILELIST_ONLY" priority="CRITICAL" description="ВСЕ ВАЖНЫЕ ПРАВИЛА И ИНФОРМАЦИЮ ЗАПИСЫВАТЬ ТОЛЬКО В FILELIST" />
+    <rule id="CONFIGS_ONLY_IN_COMMON" priority="CRITICAL" description="СТРОГО ТОЛЬКО /home/app/common/configs/ ДЛЯ ВСЕХ КОНФИГУРАЦИЙ - ЗАПРЕЩЕНО СОЗДАВАТЬ НОВЫЕ ФАЙЛЫ И ПАПКИ" />
+    <rule id="PRODUCTION_DOMAIN" priority="CRITICAL" description="КРИТИЧНО: ПРОД - ЭТО app.kolkhoz.io! localhost:8000 и api.kolkhoz.io - это один и тот же сервер. НЕ ПРЕДПОЛАГАТЬ что это разные окружения!" />
+    <rule id="NGINX_CONFIG_ISSUE" priority="RESOLVED" description="ИСПРАВЛЕНО: app.kolkhoz.io теперь показывает ESPHome YAML Constructor - конфигурация Nginx исправлена" />
+    <rule id="CORRECT_BUILD_PATH" priority="RESOLVED" description="ИСПРАВЛЕНО: BUILD ФАЙЛЫ ESPHome лежат в /home/app/data/build/ - Nginx конфигурация обновлена" />
+    <rule id="DEPLOY_SCRIPTS_FIXED" priority="HIGH" description="ИСПРАВЛЕНО: Деплой скрипты теперь копируют конфигурацию в /etc/nginx/conf.d/ вместо /etc/nginx/sites-available/" />
+    <rule id="DEFAULT_CONFIG_FIXED" priority="RESOLVED" description="ИСПРАВЛЕНО: Дефолтная конфигурация ESPHome теперь загружается автоматически при открытии и создании новой конфигурации" />
+    <rule id="DEFAULT_CONFIG_COMPILATION" priority="CRITICAL" description="КРИТИЧНО: Дефолтная конфигурация ESPHome ДОЛЖНА компилироваться без ошибок - это базовая функциональность приложения" />
+    <rule id="TESTING_RULES" priority="CRITICAL" description="КРИТИЧНО: ВСЕГДА использовать только существующие тесты (pytest) или Playwright MCP. ЗАПРЕЩЕНО создавать временные скрипты, curl команды или ad hoc Python код" />
+    <rule id="PYTHON_IMPORTS_FIXED" priority="RESOLVED" description="ИСПРАВЛЕНО: Все относительные импорты (from ..) заменены на абсолютные импорты от корня проекта согласно правилу python-imports.mdc" />
+    <rule id="USELESS_TESTS_FIXED" priority="RESOLVED" description="ИСПРАВЛЕНО: Бесполезные тесты с assert response.status in [200, 500] заменены на конкретные проверки согласно правилу useless-tests.mdc" />
+    <rule id="SQLITE_REMOVED" priority="RESOLVED" description="ИСПРАВЛЕНО: SQLite удален из тестов - используется файловая система согласно архитектуре проекта" />
+    <rule id="VALIDATE_ENDPOINT_WORKING" priority="RESOLVED" description="ПРОВЕРЕНО: /validate endpoint работает правильно - POST запросы возвращают 200 OK, GET запросы возвращают 405 Method Not Allowed (нормальное поведение)" />
+    <rule id="TEST_STATES_VIA_HEADERS" priority="RESOLVED" description="ИСПРАВЛЕНО: Тесты теперь проверяют состояния системы через заголовки ответа (X-Current-State) согласно правилам тестирования" />
+    <rule id="NO_CODE_DUPLICATION" priority="RESOLVED" description="ИСПРАВЛЕНО: Устранено дублирование кода в тестах - создан базовый класс BaseValidationTest с общей логикой проверки заголовков" />
+    <rule id="FILELIST_ENRICHED" priority="RESOLVED" description="ОБОГАЩЕНО: FILELIST дополнен информацией о структуре проекта, связности модулей, зависимостях функций и детальных контрактах функций" />
+    <rule id="ARCHITECTURE_ANALYSIS_ADDED" priority="HIGH" description="ДОБАВЛЕНО: Архитектурный анализ компонентов, паттернов и потоков данных для лучшего понимания системы" />
+    <rule id="FRONTEND_BUILD_PATH" priority="CRITICAL" description="КРИТИЧНО: Фронтенд ДОЛЖЕН собираться сразу в /home/app/data/build/ - НЕ КОПИРОВАТЬ ФАЙЛЫ ВРУЧНУЮ! Использовать --output-path /home/app/data/build в npm run build" />
+    <rule id="QUICK_ERROR_SEARCH" priority="CRITICAL" description="КРИТИЧНО: ВСЕГДА использовать централизованную систему поиска ошибок! Команды: python scripts/quick_error_search.py [search_term] для поиска ошибок, error_tracker.log_error() для логирования, error_tracker.search_errors() для поиска по ключевым словам. НЕ ТРАТИТЬ ПОЛ ДНЯ НА ПОИСК ОШИБОК!" />
+    <rule id="UNIFIED_LOG_SYSTEM" priority="CRITICAL" description="КРИТИЧНО: ЕДИНАЯ СИСТЕМА ЛОГОВ БЕЗ ДУБЛИРОВАНИЯ! ВСЕ операции ESPHome ДОЛЖНЫ использовать ESPHomeLogParser для парсинга логов, LogDisplay для отображения, logUtils для обработки. НЕ ДУБЛИРОВАТЬ логику логов в разных местах!" />
+    <rule id="STATE_MACHINE_ERROR_ANALYSIS" priority="CRITICAL" description="КРИТИЧНО: При ошибке 'Invalid transition' ВСЕГДА СРАЗУ читать JSON конфигурацию стейт-машины (backend/shared/stateMachineSimplified.json), найти текущее состояние в 'stateTransitions', проверить список разрешенных переходов, выбрать правильный переход из списка. НЕ ПРЕДПОЛАГАТЬ логику переходов без чтения документации!" />
+    <rule id="STATE_MACHINE_TRANSITIONS_CONTRACT" priority="CRITICAL" description="КРИТИЧНО: ВСЕ переходы стейт-машины ДОЛЖНЫ соответствовать JSON конфигурации! ПРАВИЛЬНАЯ ЛОГИКА: INITIAL → COMPILE (действие) → COMPILING (состояние) → COMPILED (действие) → COMPILED (состояние). Различать ДЕЙСТВИЯ (COMPILE, VALIDATE) и СОСТОЯНИЯ (COMPILING, VALID, COMPILED). ВСЕГДА читать JSON конфигурацию перед написанием переходов!" />
+  </critical_rules>
+
+  <quick_navigation>
+    <by_task>
+      <task name="API Testing" files="backend/tests/api/, backend/main.py, backend/esphome.py" description="Files needed for API endpoint testing" />
+      <task name="Frontend Development" files="frontend/src/App.jsx, frontend/src/components/, frontend/src/hooks/" description="Core frontend files for React development" />
+      <task name="Docker Issues" files="deployment/docker/, backend/services/docker_manager.py" description="Docker configuration and management files" />
+      <task name="Database Problems" files="backend/database.py, backend/db/, backend/alembic/" description="Database connection and migration files" />
+      <task name="Configuration Issues" files="common/configs/, backend/config_manager.py" description="Configuration management and default configs" />
+      <task name="Service Debugging" files="backend/services/, backend/utils/" description="Core business logic and utility functions" />
+      <task name="Build Issues" files="data/build/, backend/services/esphome_service.py" description="ESPHome compilation and build output" />
+      <task name="Environment Setup" files="data/env/config/, backend/settings.py" description="Environment configuration and settings" />
+      <task name="Session Management" files="backend/tests/http_helpers.py, backend/FastSession/" description="Session handling and HTTP client management" />
+      <task name="Binary Management" files="backend/services/esphome/binary_manager.py, backend/services/storage_service.py" description="Binary file storage and retrieval" />
+      <task name="Path Management" files="backend/utils/filelist_parser.py" description="Centralized XML-based path management" />
+      <task name="API Testing" files="backend/tests/api/test_validation.py" description="API validation and response structure testing" />
+    </by_task>
+    
+    <by_error_type>
+      <error name="Import Errors" files="backend/, backend/utils/" description="Python import and module resolution issues" />
+      <error name="404 Errors" files="backend/esphome.py, backend/services/storage_service.py" description="File not found and storage issues" />
+      <error name="500 Errors" files="backend/main.py, backend/services/" description="Internal server errors and service failures" />
+      <error name="Compilation Issues" files="backend/services/esphome_service.py, backend/services/docker_manager.py" description="ESPHome compilation and Docker problems" />
+      <error name="Frontend Loading" files="frontend/src/App.jsx, frontend/src/components/" description="React component and UI issues" />
+      <error name="Database Connection" files="backend/database.py, data/storage/" description="Database connectivity and data access" />
+      <error name="Session Issues" files="backend/tests/http_helpers.py, backend/FastSession/" description="Session management and cookie handling" />
+      <error name="Binary Retrieval" files="backend/services/esphome/binary_manager.py" description="Binary file path resolution and storage access" />
+      <error name="API Response Structure" files="backend/tests/api/test_validation.py" description="API response format mismatch in validation tests" />
+      <error name="YAML Syntax" files="backend/tests/http_helpers.py" description="YAML syntax errors in test configurations" />
+    </by_error_type>
+  </quick_navigation>
+
+  <architectural_recommendations>
+    <recommendation name="Service Isolation" priority="MEDIUM" description="Services are well isolated with clear interfaces" />
+    <recommendation name="Error Handling" priority="LOW" description="Error handling patterns are consistent across services" />
+    <recommendation name="Configuration Management" priority="RESOLVED" description="Configuration management centralized via XML parser" />
+    <recommendation name="Testing Strategy" priority="RESOLVED" description="Fix API response structure mismatch in validation tests - useless tests fixed, specific assertions added" />
+    <recommendation name="Monitoring" priority="LOW" description="Add comprehensive monitoring and logging for production readiness" />
+    <recommendation name="Performance Optimization" priority="RESOLVED" description="Optimize Docker container reuse and compilation caching - ContainerManager with reuse system already implemented" />
+    <recommendation name="API Consistency" priority="RESOLVED" description="Standardize API response formats across all endpoints" />
+    <recommendation name="Documentation Updates" priority="RESOLVED" description="Update API documentation to reflect current response structures - validation endpoint response format updated" />
+    <recommendation name="Config Files Rule" priority="RESOLVED" description="STRICTLY create configurations as separate files in correct folders from FILELIST - ALL configs now in /home/app/common/configs/" />
+    <recommendation name="Unified Log System" priority="RESOLVED" description="IMPLEMENTED: Единая система логов без дублирования кода - ESPHomeLogParser для парсинга, LogDisplay для отображения, logUtils для обработки. Все операции ESPHome используют единый формат OperationLogs" />
+  </architectural_recommendations>
+
+  <file_relationships>
+    <relationship type="imports">
+      <file path="backend/main.py" imports="backend/services/esphome_service.py, backend/services/docker_manager.py, backend/services/storage_service.py" />
+      <file path="backend/esphome.py" imports="backend/services/esphome_service.py, backend/services/storage_service.py, backend/utils/esphome_log_parser.py" />
+      <file path="backend/services/esphome_service.py" imports="backend/services/docker_manager.py, backend/services/storage_service.py" />
+      <file path="backend/services/esphome/validation.py" imports="backend/utils/esphome_log_parser.py, backend/contracts/service_contracts.py" />
+      <file path="backend/services/esphome/compilation.py" imports="backend/utils/esphome_log_parser.py, backend/contracts/service_contracts.py" />
+      <file path="backend/services/docker_manager.py" imports="backend/utils/" />
+      <file path="frontend/App.jsx" imports="frontend/components/, frontend/hooks/, frontend/components/LogDisplay.jsx" />
+      <file path="frontend/components/LogDisplay.jsx" imports="frontend/src/utils/logUtils.js" />
+      <file path="frontend/hooks/useApiClient.js" imports="frontend/src/utils/logUtils.js" />
+    </relationship>
+    
+    <relationship type="depends_on">
+      <file path="frontend/App.jsx" depends_on="common/configs/default.yaml" />
+      <file path="backend/tests/conftest_helpers.py" depends_on="common/configs/default.yaml" />
+      <file path="backend/services/esphome_service.py" depends_on="data/build/" />
+      <file path="backend/services/storage_service.py" depends_on="data/cache/, data/uploaded_files/" />
+      <file path="backend/database.py" depends_on="data/storage/esphome_web.db" />
+      <file path="backend/services/esphome/validation.py" depends_on="backend/utils/esphome_log_parser.py, backend/contracts/service_contracts.py" />
+      <file path="backend/services/esphome/compilation.py" depends_on="backend/utils/esphome_log_parser.py, backend/contracts/service_contracts.py" />
+      <file path="frontend/components/LogDisplay.jsx" depends_on="frontend/src/utils/logUtils.js" />
+      <file path="frontend/hooks/useApiClient.js" depends_on="frontend/src/utils/logUtils.js" />
+    </relationship>
+    
+    <relationship type="configures">
+      <file path="backend/settings.py" configures="backend/services/, backend/main.py" />
+      <file path="data/env/config/.env" configures="backend/settings.py" />
+      <file path="common/configs/default.yaml" configures="frontend/App.jsx, backend/tests/" />
+      <file path="backend/contracts/service_contracts.py" configures="backend/services/esphome/, backend/utils/esphome_log_parser.py" />
+      <file path="backend/utils/esphome_log_parser.py" configures="backend/services/esphome/validation.py, backend/services/esphome/compilation.py" />
+      <file path="frontend/src/utils/logUtils.js" configures="frontend/components/LogDisplay.jsx, frontend/hooks/useApiClient.js" />
+    </relationship>
+  </file_relationships>
+
+  <common_issues>
+    <issue name="ImportError: No module named 'X'" 
+           solution_files="backend/utils/, backend/services/" 
+           check_files="backend/main.py, backend/esphome.py"
+           fix_command="cd backend &amp;&amp; python -c &apos;import X&apos;" />
+    
+    <issue name="404 Not Found" 
+           solution_files="backend/services/storage_service.py, backend/esphome.py" 
+           check_files="data/build/, data/cache/"
+           fix_command="sudo systemctl restart esphome-backend.service" />
+    
+    <issue name="500 Internal Server Error" 
+           solution_files="backend/main.py, backend/services/" 
+           check_files="data/env/config/.env, backend/settings.py"
+           fix_command="sudo journalctl -u esphome-backend.service --lines=50" />
+    
+    <issue name="Permission denied" 
+           solution_files="data/cache/, data/build/" 
+           check_files="data/"
+           fix_command="sudo chown -R app:app data/" />
+    
+    <issue name="Docker connection failed" 
+           solution_files="backend/services/docker_manager.py, deployment/docker/" 
+           check_files="deployment/docker/docker-compose.yaml"
+           fix_command="sudo systemctl restart docker" />
+    
+    <issue name="Frontend not loading" 
+           solution_files="frontend/App.jsx, frontend/components/" 
+           check_files="data/build/index.html"
+           fix_command="cd frontend &amp;&amp; npm run build" />
+  </common_issues>
+
+  <critical_paths>
+    <path name="ESPHome Compilation Flow">
+      <step>frontend/App.jsx → backend/esphome.py → backend/services/esphome_service.py → backend/services/docker_manager.py → data/build/</step>
+      <description>Complete flow from user input to compiled firmware</description>
+    </path>
+    
+    <path name="Configuration Loading Flow">
+      <step>frontend/App.jsx → common/configs/default.yaml → backend/services/config_service.py</step>
+      <description>Default configuration loading and management</description>
+    </path>
+    
+    <path name="Error Debugging Flow">
+      <step>Check logs → backend/services/ → data/env/config/.env → Restart service</step>
+      <description>Systematic approach to debugging application issues</description>
+    </path>
+    
+    <path name="Test Execution Flow">
+      <step>backend/tests/conftest.py → backend/tests/conftest_helpers.py → common/configs/default.yaml → Test execution</step>
+      <description>Test setup and execution workflow</description>
+    </path>
+    
+    <path name="File Upload Flow">
+      <step>frontend/App.jsx → backend/config_routes.py → backend/services/storage_service.py → data/uploaded_files/</step>
+      <description>User file upload and storage process</description>
+    </path>
+    
+    <path name="Unified Log Processing Flow">
+      <step>ESPHome Docker → backend/utils/esphome_log_parser.py → backend/contracts/service_contracts.py:OperationLogs → frontend/src/utils/logUtils.js → frontend/src/components/LogDisplay.jsx</step>
+      <description>Единый поток обработки логов для всех операций ESPHome без дублирования кода</description>
+    </path>
+    
+    <path name="Validation with Logs Flow">
+      <step>frontend/App.jsx → frontend/hooks/useApiClient.js → backend/esphome.py → backend/services/esphome/validation.py → backend/utils/esphome_log_parser.py → frontend/src/components/LogDisplay.jsx</step>
+      <description>Валидация конфигурации с отображением логов ESPHome</description>
+    </path>
+    
+    <path name="Compilation with Logs Flow">
+      <step>frontend/App.jsx → frontend/hooks/useApiClient.js → backend/esphome.py → backend/services/esphome/compilation.py → backend/utils/esphome_log_parser.py → frontend/src/components/LogDisplay.jsx</step>
+      <description>Компиляция конфигурации с отображением логов ESPHome</description>
+    </path>
+  </critical_paths>
+
+  <search_patterns>
+    <pattern name="Find API endpoints" search="def.*@app\.(get|post|put|delete)" files="backend/*.py" description="FastAPI route definitions" />
+    <pattern name="Find service classes" search="class.*Service" files="backend/services/*.py" description="Business logic service classes" />
+    <pattern name="Find React components" search="function.*\(\)" files="frontend/components/*.jsx" description="React functional components" />
+    <pattern name="Find configuration" search="config|settings|env" files="backend/config*.py, data/env/config/" description="Configuration and environment files" />
+    <pattern name="Find error handling" search="except|raise|Error" files="backend/" description="Error handling and exception management" />
+    <pattern name="Find database models" search="class.*\(Base\)" files="backend/models/" description="SQLAlchemy database models" />
+    <pattern name="Find test functions" search="def test_" files="backend/tests/" description="Test function definitions" />
+    <pattern name="Find Docker configs" search="FROM|RUN|COPY" files="deployment/docker/" description="Docker configuration files" />
+    <pattern name="Find log processing" search="ESPHomeLogParser|OperationLogs|processLogs" files="backend/, frontend/" description="Unified log processing system" />
+    <pattern name="Find log display components" search="LogDisplay|logUtils" files="frontend/" description="Log display and utility components" />
+    <pattern name="Find log parsing" search="parse_logs|format_logs_for_ui" files="backend/utils/" description="Log parsing utilities" />
+  </search_patterns>
+
+  <development_workflow>
+    <workflow name="Bug Fixing">
+      <step>1. Check logs: sudo journalctl -u esphome-backend.service --lines=50</step>
+      <step>2. Identify error type from common_issues section</step>
+      <step>3. Check related files from quick_navigation</step>
+      <step>4. Apply fix and restart service: sudo systemctl restart esphome-backend.service</step>
+      <step>5. Test with existing tests or Playwright MCP</step>
+      <step>6. Verify fix works: check service status and test endpoints</step>
+    </workflow>
+    
+    <workflow name="Feature Development">
+      <step>1. Check existing similar features in backend/services/</step>
+      <step>2. Follow critical_paths for data flow understanding</step>
+      <step>3. Update related files from file_relationships</step>
+      <step>4. Test with pytest or Playwright MCP</step>
+      <step>5. Update documentation if needed</step>
+    </workflow>
+    
+    <workflow name="Code Refactoring">
+      <step>1. Identify duplicated code using search_patterns</step>
+      <step>2. Apply refactoring_patterns for consolidation</step>
+      <step>3. Create utility functions in backend/utils/</step>
+      <step>4. Update imports across affected files</step>
+      <step>5. Test all affected functionality</step>
+    </workflow>
+    
+    <workflow name="Performance Issues">
+      <step>1. Check monitoring_debugging section for resource usage</step>
+      <step>2. Identify bottlenecks using performance_optimization</step>
+      <step>3. Apply optimization strategies</step>
+      <step>4. Monitor improvements</step>
+    </workflow>
+    
+    <workflow name="Security Review">
+      <step>1. Run security_checklist for all components</step>
+      <step>2. Verify input validation and file upload security</step>
+      <step>3. Check environment variable handling</step>
+      <step>4. Review API security configuration</step>
+    </workflow>
+    
+    <workflow name="Log System Development">
+      <step>1. Use ESPHomeLogParser for all ESPHome operations</step>
+      <step>2. Use LogDisplay component for all log display</step>
+      <step>3. Use logUtils for all frontend log processing</step>
+      <step>4. Follow UNIFIED_LOG_SYSTEM rule - NO DUPLICATION</step>
+      <step>5. Test logs display in UI after changes</step>
+    </workflow>
+    
+    <workflow name="Adding New ESPHome Operations">
+      <step>1. Create operation in backend/services/esphome/</step>
+      <step>2. Use ESPHomeLogParser.parse_logs() for log processing</step>
+      <step>3. Return OperationLogs in result object</step>
+      <step>4. Use LogDisplay component in frontend</step>
+      <step>5. Use processApiResponseWithLogs() in API client</step>
+    </workflow>
+  </development_workflow>
+
+  <code_quality_standards>
+    <standard name="Python Code">
+      <rule>Always use absolute imports from project root (backend/)</rule>
+      <rule>Never duplicate code - create utility functions in backend/utils/</rule>
+      <rule>Always handle errors with proper exception handling</rule>
+      <rule>Use type hints for all function parameters and return values</rule>
+      <rule>Follow PEP 8 style guidelines</rule>
+      <rule>Use async/await for I/O operations</rule>
+    </standard>
+    
+    <standard name="React Code">
+      <rule>Use functional components with hooks</rule>
+      <rule>Extract reusable logic into custom hooks in frontend/hooks/</rule>
+      <rule>Use Chakra UI components consistently</rule>
+      <rule>Implement proper error boundaries</rule>
+      <rule>Use proper state management patterns</rule>
+    </standard>
+    
+    <standard name="Testing">
+      <rule>Never write tests that accept any status code (e.g., assert response.status in [200, 500])</rule>
+      <rule>Always test specific functionality, not just "response exists"</rule>
+      <rule>Use state machine constants for state checks</rule>
+      <rule>Test both success and failure scenarios</rule>
+      <rule>Use existing test infrastructure (pytest, Playwright MCP)</rule>
+    </standard>
+    
+    <standard name="API Design">
+      <rule>Use proper HTTP status codes</rule>
+      <rule>Implement consistent error response format</rule>
+      <rule>Use Pydantic schemas for request/response validation</rule>
+      <rule>Follow RESTful conventions</rule>
+    </standard>
+    
+    <standard name="Log Processing">
+      <rule>ALWAYS use ESPHomeLogParser for ESPHome operations</rule>
+      <rule>NEVER duplicate log parsing logic</rule>
+      <rule>ALWAYS return OperationLogs in API responses</rule>
+      <rule>ALWAYS use LogDisplay component for log display</rule>
+      <rule>ALWAYS use logUtils for frontend log processing</rule>
+      <rule>Follow UNIFIED_LOG_SYSTEM rule strictly</rule>
+    </standard>
+  </code_quality_standards>
+
+  <refactoring_patterns>
+    <pattern name="Extract Service Method">
+      <when>Repeated business logic in multiple files</when>
+      <action>Create method in appropriate service class in backend/services/</action>
+      <example>Move validation logic to services/validation_service.py</example>
+      <files_to_check>backend/services/esphome_service.py, backend/services/storage_service.py</files_to_check>
+    </pattern>
+    
+    <pattern name="Create Utility Function">
+      <when>Same helper function in multiple files</when>
+      <action>Create function in backend/utils/</action>
+      <example>File operations, string formatting, date handling, validation helpers</example>
+      <files_to_check>backend/utils/file_utils.py, backend/utils/validation.py</files_to_check>
+    </pattern>
+    
+    <pattern name="Consolidate Configuration">
+      <when>Configuration scattered across files</when>
+      <action>Centralize in backend/settings.py or common/configs/</action>
+      <example>API endpoints, file paths, constants, environment variables</example>
+      <files_to_check>backend/settings.py, backend/constants.py, data/env/config/.env</files_to_check>
+    </pattern>
+    
+    <pattern name="Extract Base Class">
+      <when>Common functionality across multiple classes</when>
+      <action>Create base class with shared methods</action>
+      <example>BaseService, BaseTest, BaseComponent</example>
+      <files_to_check>backend/services/base_service.py, backend/tests/conftest_base.py</files_to_check>
+    </pattern>
+    
+    <pattern name="Consolidate Error Handling">
+      <when>Similar error handling patterns repeated</when>
+      <action>Create centralized error handling utilities</action>
+      <example>Custom exception classes, error response formatters</example>
+      <files_to_check>backend/exceptions.py, backend/utils/error_handling.py</files_to_check>
+    </pattern>
+    
+    <pattern name="Consolidate Log Processing">
+      <when>Log parsing logic duplicated across ESPHome operations</when>
+      <action>Use ESPHomeLogParser for all operations</action>
+      <example>Validation, compilation, flashing operations</example>
+      <files_to_check>backend/services/esphome/, backend/utils/esphome_log_parser.py</files_to_check>
+    </pattern>
+    
+    <pattern name="Consolidate Log Display">
+      <when>Log display components duplicated in frontend</when>
+      <action>Use LogDisplay component for all log display</action>
+      <example>Validation logs, compilation logs, error logs</example>
+      <files_to_check>frontend/src/components/, frontend/src/components/LogDisplay.jsx</files_to_check>
+    </pattern>
+    
+    <pattern name="Consolidate Log Utilities">
+      <when>Log processing utilities duplicated in frontend</when>
+      <action>Use logUtils for all frontend log processing</action>
+      <example>API response processing, log formatting, statistics</example>
+      <files_to_check>frontend/src/hooks/, frontend/src/utils/logUtils.js</files_to_check>
+    </pattern>
+  </refactoring_patterns>
+
+  <performance_optimization>
+    <optimization name="Database Queries">
+      <check>backend/database.py, backend/models/</check>
+      <action>Use connection pooling, optimize queries, add indexes</action>
+      <monitor>data/storage/esphome_web.db size and query performance</monitor>
+      <commands>sqlite3 data/storage/esphome_web.db ".schema"</commands>
+    </optimization>
+    
+    <optimization name="File Operations">
+      <check>backend/services/storage_service.py</check>
+      <action>Use async file operations, cache frequently accessed files</action>
+      <monitor>data/cache/, data/build/ directory sizes</monitor>
+      <commands>du -sh data/cache/ data/build/</commands>
+    </optimization>
+    
+    <optimization name="Docker Containers">
+      <check>backend/services/docker_manager.py</check>
+      <action>Reuse containers, optimize image sizes, implement container pooling</action>
+      <monitor>Docker container memory usage and startup time</monitor>
+      <commands>docker stats, docker system df</commands>
+    </optimization>
+    
+    <optimization name="Frontend Bundle">
+      <check>frontend/, data/build/</check>
+      <action>Code splitting, lazy loading, optimize bundle size</action>
+      <monitor>data/build/asset-manifest.json bundle sizes</monitor>
+      <commands>cd frontend &amp;&amp; npm run build -- --analyze</commands>
+    </optimization>
+    
+    <optimization name="API Response Caching">
+      <check>backend/services/esphome_service.py, backend/services/cache_service.py</check>
+      <action>Implement response caching for compilation results</action>
+      <monitor>Cache hit rates and response times</monitor>
+      <commands>Check data/cache/ directory usage</commands>
+    </optimization>
+    
+    <optimization name="Log Processing Performance">
+      <check>backend/utils/esphome_log_parser.py, frontend/src/utils/logUtils.js</check>
+      <action>Optimize log parsing and formatting for large log outputs</action>
+      <monitor>Log processing time and memory usage</monitor>
+      <commands>Profile log parsing with large ESPHome outputs</commands>
+    </optimization>
+    
+    <optimization name="Log Display Performance">
+      <check>frontend/src/components/LogDisplay.jsx</check>
+      <action>Implement virtual scrolling for large log arrays</action>
+      <monitor>UI rendering performance with many log lines</monitor>
+      <commands>Test LogDisplay with 1000+ log lines</commands>
+    </optimization>
+  </performance_optimization>
+
+  <security_checklist>
+    <check name="Input Validation">
+      <files>backend/schemas/, backend/services/esphome_service.py</files>
+      <verify>All user inputs are validated with Pydantic schemas</verify>
+      <commands>grep -r "BaseModel" backend/schemas/</commands>
+    </check>
+    
+    <check name="File Upload Security">
+      <files>backend/services/storage_service.py, backend/config_routes.py</files>
+      <verify>File type validation, size limits, path sanitization</verify>
+      <commands>Check file upload endpoints for validation</commands>
+    </check>
+    
+    <check name="Environment Variables">
+      <files>data/env/config/.env, backend/settings.py</files>
+      <verify>No secrets in code, proper environment variable handling</verify>
+      <commands>grep -r "password\|secret\|key" backend/ --exclude-dir=__pycache__</commands>
+    </check>
+    
+    <check name="API Security">
+      <files>backend/main.py, backend/*.py</files>
+      <verify>CORS configuration, rate limiting, error handling</verify>
+      <commands>Check CORS settings and error response formats</commands>
+    </check>
+    
+    <check name="File System Security">
+      <files>data/, backend/services/storage_service.py</files>
+      <verify>Proper file permissions, path traversal protection</verify>
+      <commands>ls -la data/, check file access patterns</commands>
+    </check>
+    
+    <check name="Docker Security">
+      <files>deployment/docker/, backend/services/docker_manager.py</files>
+      <verify>Container isolation, resource limits, secure base images</verify>
+      <commands>docker inspect containers for security settings</commands>
+    </check>
+    
+    <check name="Log Data Security">
+      <files>backend/utils/esphome_log_parser.py, frontend/src/utils/logUtils.js</files>
+      <verify>Log data sanitization, no sensitive information exposure</verify>
+      <commands>Check log output for passwords, API keys, tokens</commands>
+    </check>
+    
+    <check name="Log Display Security">
+      <files>frontend/src/components/LogDisplay.jsx</files>
+      <verify>XSS protection in log display, proper HTML escaping</verify>
+      <commands>Test log display with malicious log content</commands>
+    </check>
+  </security_checklist>
+
+  <monitoring_debugging>
+    <monitor name="Service Health">
+      <check>sudo systemctl status esphome-backend.service</check>
+      <logs>sudo journalctl -u esphome-backend.service --lines=50</logs>
+      <endpoint>https://api.kolkhoz.io/health</endpoint>
+      <threshold>Service should be active and running</threshold>
+    </monitor>
+    
+    <monitor name="Disk Usage">
+      <check>df -h data/</check>
+      <cleanup>data/cache/, data/build/compile/</cleanup>
+      <threshold>80% disk usage</threshold>
+      <commands>du -sh data/* | sort -hr</commands>
+    </monitor>
+    
+    <monitor name="Docker Resources">
+      <check>docker stats</check>
+      <cleanup>docker system prune</cleanup>
+      <threshold>High memory usage (>80%)</threshold>
+      <commands>docker system df, docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"</commands>
+    </monitor>
+    
+    <monitor name="Application Logs">
+      <check>data/logs/, data/env/logs/</check>
+      <analyze>Error patterns, performance metrics</analyze>
+      <threshold>High error rate (>5% of requests)</threshold>
+      <commands>tail -f data/logs/*.log</commands>
+    </monitor>
+    
+    <monitor name="Database Performance">
+      <check>data/storage/esphome_web.db</check>
+      <analyze>Query performance, database size</analyze>
+      <threshold>Slow queries (>1 second)</threshold>
+      <commands>sqlite3 data/storage/esphome_web.db ".timer on"</commands>
+    </monitor>
+    
+    <monitor name="API Response Times">
+      <check>Backend API endpoints</check>
+      <analyze>Response time distribution</analyze>
+      <threshold>Slow responses (>2 seconds)</threshold>
+      <commands>Use Playwright MCP to test endpoint performance</commands>
+    </monitor>
+    
+    <monitor name="Log Processing Performance">
+      <check>backend/utils/esphome_log_parser.py</check>
+      <analyze>Log parsing time, memory usage</analyze>
+      <threshold>Slow log parsing (>500ms for large logs)</threshold>
+      <commands>Profile ESPHomeLogParser with large outputs</commands>
+    </monitor>
+    
+    <monitor name="Log Display Performance">
+      <check>frontend/src/components/LogDisplay.jsx</check>
+      <analyze>UI rendering time with large log arrays</analyze>
+      <threshold>Slow rendering (>1 second for 1000+ logs)</threshold>
+      <commands>Test LogDisplay component performance</commands>
+    </monitor>
+    
+    <monitor name="Unified Log System Health">
+      <check>All ESPHome operations use unified log system</check>
+      <analyze>Consistency of log processing across operations</analyze>
+      <threshold>Any operation not using ESPHomeLogParser</threshold>
+      <commands>grep -r "ESPHomeLogParser" backend/services/esphome/</commands>
+    </monitor>
+  </monitoring_debugging>
+
+  <function_contracts_detailed>
+    <contract name="loadDefaultConfig" module="frontend/src/App.jsx" type="React Hook">
+      <description>Automatically loads default ESPHome configuration on page load</description>
+      <parameters>None</parameters>
+      <returns>void (sets textAreaValue state)</returns>
+      <dependencies>common/configs/default.yaml</dependencies>
+      <contract_requirement>При открытии главной страницы ДОЛЖНА автоматически загружаться дефолтная валидная конфигурация! Не нужно нажимать New Config!</contract_requirement>
+    </contract>
+    
+    <contract name="loadCompilationStatus" module="frontend/src/App.jsx" type="React Hook">
+      <description>Loads compilation status and restores application state on page refresh</description>
+      <parameters>fileId: string</parameters>
+      <returns>void (restores state machine state)</returns>
+      <dependencies>backend/routes/status_routes.py, frontend/src/hooks/useApiOperations.js</dependencies>
+      <contract_requirement>КРИТИЧНО: При обновлении страницы с fileId ДОЛЖЕН загружаться статус компиляции с бекенда и восстанавливаться состояние стейт-машины! Если файл скомпилирован, кнопки Download BIN, Download OTA, Flash, Emulate, Share Link, Add to Favorites ДОЛЖНЫ быть активными!</contract_requirement>
+    </contract>
+    
+    <contract name="stateMachineTransitions" module="frontend/src/hooks/useApiOperations.js, frontend/src/App.jsx" type="State Machine Logic">
+      <description>Correct state machine transitions according to XML configuration</description>
+      <parameters>machineType: StateMachineType, transition: string</parameters>
+      <returns>void (transitions state machine)</returns>
+      <dependencies>backend/shared/stateMachineSimplified.xml, backend/shared/state_machine_xml_manager.py</dependencies>
+      <contract_requirement>КРИТИЧНО: ВСЕ переходы стейт-машины ДОЛЖНЫ соответствовать XML конфигурации! ПРАВИЛЬНАЯ ЛОГИКА: INITIAL → EDIT_YAML (действие) → EDITING (состояние) → VALIDATE (действие) → VALIDATING (состояние) → VALIDATION_SUCCESS (результат) → VALID (состояние). НЕ ПРЕДПОЛАГАТЬ логику переходов - ВСЕГДА читать XML конфигурацию через API!</contract_requirement>
+    </contract>
+    
+    <contract name="create_test_config" module="backend/tests/conftest_helpers.py" type="Function">
+      <description>Creates test configuration by reading from shared default.yaml file</description>
+      <parameters>platform: str = "esp32", board: str = "esp32dev"</parameters>
+      <returns>str (YAML configuration content)</returns>
+      <dependencies>common/configs/default.yaml</dependencies>
+      <contract_requirement>Must read from shared configuration file, not hardcoded values</contract_requirement>
+    </contract>
+    
+    <contract name="lifespan" module="backend/main.py" type="FastAPI Lifespan">
+      <description>FastAPI application lifecycle management</description>
+      <parameters>app: FastAPI</parameters>
+      <returns>AsyncGenerator[None, None]</returns>
+      <dependencies>backend/services/, backend/db/</dependencies>
+      <contract_requirement>Must initialize all services and cleanup on shutdown</contract_requirement>
+    </contract>
+    
+    <contract name="health_check" module="backend/main.py" type="API Endpoint">
+      <description>System health monitoring endpoint</description>
+      <parameters>None</parameters>
+      <returns>JSONResponse with health status</returns>
+      <dependencies>backend/services/</dependencies>
+      <contract_requirement>Must return 200 OK with system status information</contract_requirement>
+    </contract>
+    
+    <contract name="MainApp" module="frontend/src/App.jsx" type="React Component">
+      <description>Main React component with state management</description>
+      <parameters>fileId: propFileId</parameters>
+      <returns>JSX.Element</returns>
+      <dependencies>frontend/src/hooks/, frontend/src/components/, common/configs/</dependencies>
+      <contract_requirement>Must manage application state and coordinate all UI components</contract_requirement>
+    </contract>
+    
+    <contract name="validate_config" module="backend/esphome.py" type="API Endpoint">
+      <description>ESPHome configuration validation endpoint</description>
+      <parameters>yaml_text: str</parameters>
+      <returns>JSONResponse with validation result and logs</returns>
+      <dependencies>backend/services/esphome_service.py, backend/services/docker_manager.py, backend/utils/esphome_log_parser.py</dependencies>
+      <contract_requirement>КРИТИЧНО: Валидация ДОЛЖНА возвращать логи ESPHome в поле 'logs' ответа! Логи должны отображаться в UI в поле 'Compilation Logs'</contract_requirement>
+    </contract>
+    
+    <contract name="compile_config" module="backend/esphome.py" type="API Endpoint">
+      <description>ESPHome configuration compilation endpoint</description>
+      <parameters>fileId: str, yaml_text: str</parameters>
+      <returns>JSONResponse with compilation result and logs</returns>
+      <dependencies>backend/services/esphome_service.py, backend/services/docker_manager.py, backend/utils/esphome_log_parser.py</dependencies>
+      <contract_requirement>КРИТИЧНО: Компиляция ДОЛЖНА возвращать логи ESPHome в поле 'logs' ответа! Логи должны отображаться в UI в поле 'Compilation Logs'</contract_requirement>
+    </contract>
+    
+    <contract name="ESPHomeLogParser" module="backend/utils/esphome_log_parser.py" type="Utility Class">
+      <description>Единый парсер логов ESPHome для всех операций</description>
+      <parameters>stdout: str, stderr: str</parameters>
+      <returns>OperationLogs - унифицированные логи</returns>
+      <dependencies>backend/contracts/service_contracts.py</dependencies>
+      <contract_requirement>КРИТИЧНО: ВСЕ операции ESPHome (валидация, компиляция, etc.) ДОЛЖНЫ использовать единый ESPHomeLogParser для обработки логов! НЕ ДУБЛИРОВАТЬ логику парсинга!</contract_requirement>
+    </contract>
+    
+    <contract name="LogDisplay" module="frontend/src/components/LogDisplay.jsx" type="React Component">
+      <description>Универсальный компонент для отображения логов ESPHome</description>
+      <parameters>logs: Array, title: string, showStats: boolean, showFilters: boolean</parameters>
+      <returns>JSX.Element - компонент с логами</returns>
+      <dependencies>frontend/src/utils/logUtils.js</dependencies>
+      <contract_requirement>КРИТИЧНО: ВСЕ операции во фронтенде ДОЛЖНЫ использовать LogDisplay для отображения логов! НЕ ДУБЛИРОВАТЬ компоненты отображения логов!</contract_requirement>
+    </contract>
+    
+    <contract name="logUtils" module="frontend/src/utils/logUtils.js" type="Utility Functions">
+      <description>Единые утилиты для обработки логов ESPHome во фронтенде</description>
+      <parameters>logs: Array, operationType: string</parameters>
+      <returns>Object - обработанные логи с статистикой</returns>
+      <dependencies>None</dependencies>
+      <contract_requirement>КРИТИЧНО: ВСЕ API клиенты ДОЛЖНЫ использовать processApiResponseWithLogs() для единообразной обработки логов! НЕ ДУБЛИРОВАТЬ логику обработки логов!</contract_requirement>
+    </contract>
+  </function_contracts_detailed>
+
+  <migration_files>
+    <file path="backend/migrations/migrate_to_xml_state_machine.py" description="Migration script from JSON to XML state machine" dependencies="backend/shared/stateMachineSimplified.xml, backend/shared/stateMachineSimplified.json">
+      <functions>
+        <function name="StateMachineMigration" line="25" description="Handles migration from JSON to XML state machine" />
+        <function name="create_backup" line="45" description="Create backup of existing JSON state machine" />
+        <function name="validate_xml_configuration" line="60" description="Validate XML state machine configuration" />
+        <function name="migrate_state_data" line="80" description="Migrate current state data to XML format" />
+        <function name="migrate_transition_data" line="120" description="Migrate transition data to XML format" />
+        <function name="create_migration_report" line="160" description="Create migration report" />
+        <function name="run_migration" line="180" description="Run the complete migration process" />
+      </functions>
+    </file>
+  </migration_files>
+
+  <documentation_files>
+    <file path="docs/XML_STATE_MACHINE_RULES.md" description="XML State Machine Architecture Rules" dependencies="backend/shared/stateMachineSimplified.xml, backend/shared/stateMachineSchema.xsd">
+      <content>
+        <section name="Основные принципы XML архитектуры" description="Структура XML документа, типы состояний и переходов" />
+        <section name="Правила создания состояний" description="Обязательные атрибуты и примеры правильных состояний" />
+        <section name="Правила создания переходов" description="Обязательные атрибуты и примеры правильных переходов" />
+        <section name="Правила создания переходов между состояниями" description="Структура и примеры правильных переходов" />
+        <section name="Правила создания данных машины" description="Поддерживаемые типы полей и примеры" />
+        <section name="Правила создания CSS классов" description="Структура и примеры CSS классов" />
+        <section name="Правила создания списков состояний" description="Активные, успешные и ошибочные состояния" />
+        <section name="Правила создания глобальных переходов" description="Структура и примеры глобальных переходов" />
+        <section name="Правила создания взаимодействий" description="Структура и примеры взаимодействий между машинами" />
+        <section name="Правила валидации" description="Обязательные проверки и запрещенные паттерны" />
+        <section name="Применение в коде" description="Примеры использования XML state machine в Python" />
+      </content>
+    </file>
+    <file path="docs/XML_STATE_MACHINE_REFACTORING_REPORT.md" description="Complete XML State Machine Refactoring Report" dependencies="backend/shared/stateMachineSimplified.xml, backend/shared/state_machine_xml_manager.py">
+      <content>
+        <section name="Обзор рефакторинга" description="Переход с JSON на XML-based state machine архитектуру" />
+        <section name="Выполненные работы" description="Создание XML конфигурации, рефакторинг менеджера, обновление тестов" />
+        <section name="Архитектурные улучшения" description="Разделение событий и состояний, типизация, правильные workflow" />
+        <section name="Исправленные логические ошибки" description="Запрет прямых переходов, разделение событий и состояний" />
+        <section name="Преимущества новой архитектуры" description="Структурированность, валидация, читаемость, расширяемость" />
+        <section name="Обратная совместимость" description="API совместимость и данные совместимость" />
+        <section name="Тестирование" description="Обновленные и новые тесты" />
+        <section name="Производительность" description="Улучшения и метрики" />
+        <section name="Безопасность" description="Улучшения и проверки" />
+        <section name="Мониторинг и отладка" description="Новые возможности и отладка" />
+        <section name="Заключение" description="Итоги рефакторинга и следующие шаги" />
+      </content>
+    </file>
+    <file path="docs/STATE_MACHINE_LOGIC_RULE.md" description="Updated State Machine Logic Rule" dependencies="backend/shared/stateMachineSimplified.xml">
+      <content>
+        <section name="Исправленная архитектура State Machine" description="Основные принципы и исправленные переходы" />
+        <section name="Правильная логика состояний" description="Инициализация в правильное состояние" />
+        <section name="Обязательные workflow" description="Основной поток конфигурации, поток с ошибками, поток загрузки" />
+        <section name="Правила состояний" description="Активные, успешные, ошибочные и процессные состояния" />
+        <section name="Правила переходов" description="Переходы из INITIAL, процессных и финальных состояний" />
+        <section name="Проверка соответствия правилам" description="Обязательные проверки и запрещенные паттерны" />
+        <section name="Применение в коде" description="Проверка переходов, выполнение переходов, инициализация состояний" />
+        <section name="Исключения" description="Системные переходы и переходы к редактированию" />
+      </content>
+    </file>
+    <file path="docs/STATE_MACHINE_ARCHITECTURE_RULES.md" description="State Machine Architecture Rules" dependencies="backend/shared/stateMachineSimplified.xml">
+      <content>
+        <section name="Основные принципы архитектуры" description="Разделение событий и состояний, правильная номенклатура событий" />
+        <section name="Обязательные workflow" description="Основной поток конфигурации, поток с ошибками, поток загрузки" />
+        <section name="Правила состояний" description="Активные, успешные, ошибочные и процессные состояния" />
+        <section name="Правила переходов" description="Переходы из INITIAL, процессных и финальных состояний" />
+        <section name="Проверка соответствия правилам" description="Обязательные проверки и запрещенные паттерны" />
+        <section name="Применение в коде" description="Проверка переходов, выполнение переходов, инициализация состояний" />
+        <section name="Исключения" description="Системные переходы и переходы к редактированию" />
+      </content>
+    </file>
+  </documentation_files>
+
+  <api_endpoints>
+    <endpoint path="/api/state-machine/status" method="GET" description="Get current status of all state machines" dependencies="backend/shared/state_machine_xml_manager.py">
+      <response_model>StateMachineResponse</response_model>
+      <functions>
+        <function name="get_state_machine_status" description="Returns current states, CSS classes, combined state, and state lists" />
+      </functions>
+    </endpoint>
+    <endpoint path="/api/state-machine/machine/{machine_type}" method="GET" description="Get status of specific state machine" dependencies="backend/shared/state_machine_xml_manager.py">
+      <response_model>MachineStatusResponse</response_model>
+      <functions>
+        <function name="get_machine_status" description="Returns detailed status of individual machine" />
+      </functions>
+    </endpoint>
+    <endpoint path="/api/state-machine/transition" method="POST" description="Execute a state transition" dependencies="backend/shared/state_machine_xml_manager.py">
+      <request_model>TransitionRequest</request_model>
+      <response_model>TransitionResponse</response_model>
+      <functions>
+        <function name="execute_transition" description="Executes state transition with validation" />
+      </functions>
+    </endpoint>
+    <endpoint path="/api/state-machine/global-transition" method="POST" description="Execute global transition on all applicable machines" dependencies="backend/shared/state_machine_xml_manager.py">
+      <functions>
+        <function name="execute_global_transition" description="Executes global transition on all machines" />
+      </functions>
+    </endpoint>
+    <endpoint path="/api/state-machine/reset" method="POST" description="Reset all state machines to initial states" dependencies="backend/shared/state_machine_xml_manager.py">
+      <functions>
+        <function name="reset_all_machines" description="Resets all machines to initial states" />
+      </functions>
+    </endpoint>
+    <endpoint path="/api/state-machine/validate" method="GET" description="Validate XML state machine configuration" dependencies="backend/shared/state_machine_xml_manager.py">
+      <functions>
+        <function name="validate_state_machine" description="Validates XML configuration and returns errors" />
+      </functions>
+    </endpoint>
+    <endpoint path="/api/state-machine/xml-config" method="GET" description="Get XML state machine configuration" dependencies="backend/shared/stateMachineSimplified.xml">
+      <functions>
+        <function name="get_xml_configuration" description="Returns XML configuration content" />
+      </functions>
+    </endpoint>
+  </api_endpoints>
+
+  <xml_state_machine_architecture>
+    <architecture_description>XML-based state machine with XSD validation, REST API, and build assertions</architecture_description>
+    <components>
+      <component name="XML Configuration" path="backend/shared/stateMachineSimplified.xml" description="Main XML configuration file with all state machines" />
+      <component name="XSD Schema" path="backend/shared/stateMachineSchema.xsd" description="Validation schema for XML configuration" />
+      <component name="XML Parser" path="backend/shared/state_machine_xml.py" description="Parser and validator for XML configuration" />
+      <component name="XML Manager" path="backend/shared/state_machine_xml_manager.py" description="Manager for multiple XML state machines" />
+      <component name="Simplified Interface" path="backend/shared/state_machine_simplified.py" description="Simplified interface for backward compatibility" />
+      <component name="REST API" path="backend/api/state_machine.py" description="REST API endpoints for state machine management" />
+      <component name="Migration Script" path="backend/migrations/migrate_to_xml_state_machine.py" description="Migration from JSON to XML" />
+      <component name="State Machine Validator" path="backend/build_assertions/state_machine_validator.py" description="Validates consistency between backend XML and frontend JSON" />
+      <component name="Frontend Synchronizer" path="backend/build_assertions/sync_frontend_state_machine.py" description="Syncs frontend JSON with backend XML" />
+      <component name="API Consistency Checker" path="backend/build_assertions/api_consistency_checker.py" description="Checks API consistency between backend and frontend" />
+      <component name="Build Script" path="build_with_assertions.py" description="Main build script with comprehensive assertions" />
+      <component name="Makefile" path="Makefile" description="Build commands and automation" />
+      <component name="CI/CD Workflow" path=".github/workflows/state-machine-validation.yml" description="Automated validation in CI/CD pipeline" />
+    </components>
+    <state_types>
+      <type name="initial" description="Initial state" />
+      <type name="process" description="Process state (editing, configuration)" />
+      <type name="active" description="Active state (shows spinner)" />
+      <type name="success" description="Success state (green status)" />
+      <type name="error" description="Error state (red status)" />
+      <type name="idle" description="Idle state" />
+      <type name="warning" description="Warning state (yellow status)" />
+    </state_types>
+    <transition_types>
+      <type name="action" description="User or system action" />
+      <type name="result" description="Action execution result" />
+      <type name="system" description="System event" />
+      <type name="error" description="Error event" />
+    </transition_types>
+    <machines>
+      <machine name="main" description="Core configuration editing, validation, and compilation flow" />
+      <machine name="qemu" description="Device emulation and testing flow" />
+      <machine name="template" description="Template browsing, selection, and customization flow" />
+      <machine name="social" description="Social interactions, comments, and ratings flow" />
+      <machine name="favorite" description="Save and load favorite configurations flow" />
+      <machine name="share" description="Create and manage shared configuration links flow" />
+      <machine name="system" description="System-level operations like auto-save and session management" />
+    </machines>
+  </xml_state_machine_architecture>
+
+  <build_assertions_system>
+    <system_description>Comprehensive build-time validation system for state machine consistency</system_description>
+    <components>
+      <component name="State Machine Validator" path="backend/build_assertions/state_machine_validator.py" description="Validates consistency between backend XML and frontend JSON configurations">
+        <functions>
+          <function name="StateMachineValidator" line="25" description="Main validator class for state machine consistency" />
+          <function name="validate_all" line="80" description="Runs all validation checks" />
+          <function name="validate_version" line="100" description="Validates version consistency" />
+          <function name="validate_machines" line="120" description="Validates machine definitions" />
+          <function name="validate_states" line="140" description="Validates state definitions" />
+          <function name="validate_transitions" line="160" description="Validates transition definitions" />
+          <function name="validate_state_transitions" line="180" description="Validates state transition mappings" />
+          <function name="generate_report" line="200" description="Generates validation report" />
+        </functions>
+      </component>
+      <component name="Frontend Synchronizer" path="backend/build_assertions/sync_frontend_state_machine.py" description="Automatically syncs frontend JSON with backend XML">
+        <functions>
+          <function name="FrontendStateMachineSyncer" line="25" description="Main synchronizer class" />
+          <function name="sync" line="45" description="Main synchronization method" />
+          <function name="create_backup" line="60" description="Creates backup of current frontend config" />
+          <function name="load_backend_xml" line="80" description="Loads backend XML configuration" />
+          <function name="convert_to_frontend_format" line="120" description="Converts backend config to frontend format" />
+          <function name="write_frontend_config" line="140" description="Writes configuration to frontend file" />
+        </functions>
+      </component>
+      <component name="API Consistency Checker" path="backend/build_assertions/api_consistency_checker.py" description="Checks API consistency between backend and frontend">
+        <functions>
+          <function name="APIConsistencyChecker" line="25" description="Main API consistency checker" />
+          <function name="check_all" line="60" description="Runs all API consistency checks" />
+          <function name="check_backend_endpoints" line="80" description="Checks backend endpoint definitions" />
+          <function name="check_frontend_api_calls" line="100" description="Checks frontend API call patterns" />
+          <function name="check_api_models" line="120" description="Checks API model consistency" />
+          <function name="test_api_endpoints" line="140" description="Tests API endpoint accessibility" />
+          <function name="generate_report" line="160" description="Generates API consistency report" />
+        </functions>
+      </component>
+      <component name="Main Build Script" path="build_with_assertions.py" description="Main build script with comprehensive assertions">
+        <functions>
+          <function name="BuildWithAssertions" line="25" description="Main build class with assertions" />
+          <function name="run_all_assertions" line="60" description="Runs all build assertions" />
+          <function name="run_state_machine_validation" line="80" description="Runs state machine validation" />
+          <function name="run_frontend_sync" line="100" description="Runs frontend synchronization" />
+          <function name="run_api_consistency_check" line="120" description="Runs API consistency check" />
+          <function name="run_backend_tests" line="140" description="Runs backend tests" />
+          <function name="run_frontend_build" line="160" description="Runs frontend build" />
+          <function name="generate_final_report" line="180" description="Generates final build report" />
+        </functions>
+      </component>
+      <component name="Makefile" path="Makefile" description="Build commands and automation">
+        <commands>
+          <command name="build" description="Full build with all assertions" />
+          <command name="validate" description="Validate state machine consistency" />
+          <command name="sync" description="Sync frontend with backend" />
+          <command name="check-api" description="Check API consistency" />
+          <command name="test" description="Run backend tests" />
+          <command name="test-frontend" description="Run frontend build" />
+          <command name="clean" description="Clean build artifacts" />
+          <command name="install" description="Install dependencies" />
+          <command name="dev" description="Development setup" />
+          <command name="ci-validate" description="Quick validation for CI/CD" />
+          <command name="pre-commit" description="Pre-commit checks" />
+          <command name="prod-build" description="Production build" />
+          <command name="status" description="Show project status" />
+        </commands>
+      </component>
+      <component name="CI/CD Workflow" path=".github/workflows/state-machine-validation.yml" description="Automated validation in CI/CD pipeline">
+        <jobs>
+          <job name="state-machine-validation" description="Main state machine validation job" />
+          <job name="frontend-sync-check" description="Frontend synchronization check" />
+          <job name="api-endpoint-test" description="API endpoint testing" />
+        </jobs>
+        <triggers>
+          <trigger type="push" branches="main,develop" paths="backend/shared/stateMachineSimplified.xml,frontend/src/shared/types/stateMachineSimplified.json" />
+          <trigger type="pull_request" branches="main,develop" paths="backend/shared/stateMachineSimplified.xml,frontend/src/shared/types/stateMachineSimplified.json" />
+        </triggers>
+      </component>
+    </components>
+    <validation_types>
+      <type name="state_machine_consistency" description="Validates consistency between backend XML and frontend JSON" />
+      <type name="api_consistency" description="Checks API consistency between backend and frontend" />
+      <type name="frontend_sync" description="Ensures frontend is synchronized with backend" />
+      <type name="xml_schema_validation" description="Validates XML against XSD schema" />
+      <type name="endpoint_accessibility" description="Tests API endpoint accessibility" />
+    </validation_types>
+    <error_types>
+      <type name="version_mismatch" severity="error" description="Version mismatch between backend and frontend" />
+      <type name="missing_machine" severity="error" description="Missing state machine in frontend" />
+      <type name="missing_state" severity="error" description="Missing state in frontend" />
+      <type name="missing_transition" severity="error" description="Missing transition in frontend" />
+      <type name="missing_endpoint" severity="error" description="Missing API endpoint" />
+      <type name="extra_machine" severity="warning" description="Extra state machine in frontend" />
+      <type name="extra_state" severity="warning" description="Extra state in frontend" />
+      <type name="incorrect_http_method" severity="warning" description="Incorrect HTTP method usage" />
+    </error_types>
+  </build_assertions_system>
+</filelist>

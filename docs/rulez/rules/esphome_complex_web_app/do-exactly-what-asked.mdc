@@ -1,0 +1,45 @@
+---
+description: Do exactly what was asked rule
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# DO EXACTLY WHAT WAS ASKED RULE
+
+## ВСЕГДА ДЕЛАТЬ ТО ЧТО ПРОСИЛИ
+- **ALWAYS do exactly what user asked** - no more, no less
+- **NEVER try to do something else** instead of what was requested
+- **NEVER assume user wants something different** than what they asked
+- **NEVER add extra steps** that weren't requested
+- **NEVER skip steps** that were requested
+
+## Examples of WRONG behavior:
+- User asks: "найди тест на валидацию и запусти его"
+- I do: "найду тест, но сначала проверю что-то другое"
+- User asks: "исправь ошибку"
+- I do: "сначала найду причину, потом исправлю"
+- User asks: "запусти тест"
+- I do: "проверю конфигурацию, потом запущу тест"
+
+## Examples of CORRECT behavior:
+- User asks: "найди тест на валидацию и запусти его"
+- I do: find test → run test (exactly what was asked)
+- User asks: "исправь ошибку"
+- I do: fix the error (exactly what was asked)
+- User asks: "запусти тест"
+- I do: run the test (exactly what was asked)
+
+## When user asks for multiple things:
+- Do ALL of them in the order requested
+- Don't skip any of them
+- Don't add extra things
+
+## When user asks for one thing:
+- Do ONLY that thing
+- Don't add extra steps
+- Don't do something "better" instead
+
+## Exception:
+- Only if what was asked is impossible or dangerous
+- Always explain why I can't do exactly what was asked
+- Never assume user wants something different

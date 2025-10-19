@@ -1,0 +1,52 @@
+# PLAYWRIGHT AUTOMATION RULE
+
+## ИСПОЛЬЗУЙ PLAYWRIGHT ДЛЯ БРАУЗЕРНОЙ АВТОМАТИЗАЦИИ
+- **ALWAYS use Playwright MCP tools** for browser automation
+- **ALWAYS test real user workflows** through browser interactions
+- **ALWAYS capture screenshots** for debugging and documentation
+
+## Available Playwright Tools:
+- **browser_navigate** - Navigate to URLs
+- **browser_click** - Click on elements
+- **browser_type** - Type text into inputs
+- **browser_snapshot** - Capture accessibility snapshots
+- **browser_take_screenshot** - Take visual screenshots
+- **browser_evaluate** - Run JavaScript on page
+- **browser_wait_for** - Wait for conditions
+- **browser_fill_form** - Fill multiple form fields
+
+## Browser Automation Principles:
+- **Real Browser Testing**: Use actual browser interactions
+- **Accessibility First**: Use browser_snapshot for better element detection
+- **Visual Verification**: Take screenshots for important steps
+- **Error Handling**: Handle CAPTCHAs and rate limiting gracefully
+
+## Common Use Cases:
+- **Web Scraping**: Extract data from websites
+- **E2E Testing**: Test complete user workflows
+- **Form Automation**: Fill and submit forms
+- **UI Testing**: Verify visual elements and interactions
+- **Performance Testing**: Monitor page load times
+
+## Best Practices:
+- Always use browser_snapshot before interactions
+- Use descriptive element names in tool calls
+- Handle timeouts and errors gracefully
+- Take screenshots at key workflow steps
+- Use browser_wait_for for dynamic content
+
+## Examples:
+```javascript
+// Navigate and interact
+await browser_navigate("https://example.com")
+await browser_snapshot() // Get current page state
+await browser_click("login button", "ref123")
+await browser_type("username field", "ref456", "testuser")
+await browser_take_screenshot("login-form-filled")
+```
+
+## Error Handling:
+- Handle CAPTCHA challenges (429 errors)
+- Wait for dynamic content to load
+- Retry failed interactions
+- Log browser console messages for debugging

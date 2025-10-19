@@ -1,0 +1,74 @@
+---
+description: No code duplication rule
+globs: ["**/*.py", "**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"]
+alwaysApply: true
+---
+
+# NO CODE DUPLICATION RULE
+
+## ЗАПРЕЩЕНО ДУБЛИРОВАТЬ КОД ВО ВСЕМ ПРОЕКТЕ
+- **NEVER copy-paste** the same code blocks across multiple files
+- **NEVER duplicate** logic that can be abstracted
+- **NEVER repeat** the same patterns without creating reusable functions
+- **ALWAYS create** helper functions, utilities, or base classes for common logic
+
+## Required Actions:
+- **Create utility functions** for repeated operations
+- **Extract common logic** into reusable modules
+- **Use inheritance** for shared behavior
+- **Create base classes** with common functionality
+- **Use composition** instead of duplication
+
+## Examples of WRONG behavior:
+```python
+# File 1
+def validate_config(config):
+    if not config:
+        raise ValueError("Config is required")
+    if "name" not in config:
+        raise ValueError("Name is required")
+    return True
+
+# File 2 - DUPLICATE CODE!
+def validate_user(user):
+    if not user:
+        raise ValueError("User is required")
+    if "name" not in user:
+        raise ValueError("Name is required")
+    return True
+```
+
+## Examples of CORRECT behavior:
+```python
+# utils/validation.py
+def validate_required_fields(data, required_fields):
+    """Common validation logic."""
+    if not data:
+        raise ValueError("Data is required")
+    for field in required_fields:
+        if field not in data:
+            raise ValueError(f"{field} is required")
+    return True
+
+# File 1
+from utils.validation import validate_required_fields
+def validate_config(config):
+    return validate_required_fields(config, ["name"])
+
+# File 2
+from utils.validation import validate_required_fields
+def validate_user(user):
+    return validate_required_fields(user, ["name"])
+```
+
+## When writing code:
+1. **Identify repeated patterns** first
+2. **Create utility functions** for common operations
+3. **Use base classes** for shared behavior
+4. **Extract constants** for repeated values
+5. **Write each function** with unique, specific logic only
+
+## Exception:
+- Only duplicate code if it's truly specific and cannot be abstracted
+- Always prefer abstraction over duplication
+- DRY principle: Don't Repeat Yourself

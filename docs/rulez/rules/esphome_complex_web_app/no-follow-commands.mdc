@@ -1,0 +1,63 @@
+# NO FOLLOW COMMANDS RULE
+
+## НЕ ИСПОЛЬЗУЙ FOLLOW В КОМАНДАХ
+- **NEVER use `-f` or `--follow` flags** in terminal commands
+- **NEVER use `tail -f`** or similar follow commands
+- **NEVER use `journalctl -f`** or any follow commands
+
+## Forbidden Commands:
+- `journalctl -f` (use `journalctl --lines=N` instead)
+- `tail -f` (use `tail -n N` instead)
+- `docker logs -f` (use `docker logs --tail N` instead)
+- Any command with `-f` or `--follow` flag
+
+## Correct Usage:
+- `sudo journalctl -u service-name --lines=20`
+- `tail -n 20 file.log`
+- `docker logs --tail 20 container-name`
+
+## Exception:
+- Only use follow commands when explicitly requested by user
+- Always ask for permission before using follow commands
+
+## НЕ ЗАПУСКАЙ ДОЛГОЖИВУЩИЕ ПРОЦЕССЫ БЕЗ ТАЙМАУТА
+- **NEVER run long-running processes** without timeout mechanisms
+- **NEVER use background execution** (is_background=true) unless explicitly requested
+- **ALWAYS use timeout** for commands that might run indefinitely
+- **ALWAYS ask permission** before running background processes
+
+## Examples of WRONG usage:
+- `gunicorn main:app` (without timeout)
+- `python main.py` (without timeout)
+- `docker run` (without timeout)
+
+## Examples of CORRECT usage:
+- `timeout 10s gunicorn main:app`
+- `timeout 30s python main.py`
+- `timeout 60s docker run ...`
+
+## НЕ ЗАПУСКАЙ БЭКЕНД В ФОНЕ
+- **NEVER run backend in background** (nohup, &, is_background=true)
+- **ALWAYS use systemd** for backend services
+- **ALWAYS use timeout** for testing commands only
+
+## Forbidden Backend Commands:
+- `nohup gunicorn ... &` (use systemd instead)
+- `python main.py &` (use systemd instead)
+- Any backend process with `&` or `is_background=true`
+
+## Correct Backend Management:
+- `sudo systemctl start/restart/stop esphome-backend.service`
+- `sudo systemctl status esphome-backend.service`
+- `sudo journalctl -u esphome-backend.service --lines=20`
+
+## Service Restart for Critical Fixes:
+- **ALWAYS restart service** when fixing critical application issues
+- **ALWAYS restart service** when fixing 500 errors or broken endpoints
+- **ALWAYS restart service** after applying code fixes
+- **ALWAYS verify** fixes work after restart
+
+## Exception:
+- Only use background for testing commands with timeout
+- Never use background for actual backend services
+- **ALWAYS restart services** to apply critical fixes (this is REQUIRED, not forbidden)

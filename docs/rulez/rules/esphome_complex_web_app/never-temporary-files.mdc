@@ -1,0 +1,44 @@
+# NEVER USE TEMPORARY FILES RULE
+
+## НИКОГДА НЕ ИСПОЛЬЗУЙ ВРЕМЕННЫЕ ФАЙЛЫ
+
+## СТРОГО ЗАПРЕЩЕНО:
+- Создание файлов в `/tmp/`
+- Использование `tempfile.mkdtemp()`
+- Создание временных JSON файлов
+- Любые временные файлы вне проекта
+- Команды типа `mkdir -p /tmp/test_validation`
+- Создание файлов через `echo > /tmp/file`
+
+## РАЗРЕШЕНО ТОЛЬКО:
+- Использование файлов из `py/tests/fixtures/`
+- Использование функций из `py/tests/conftest_helpers.py`
+- Создание постоянных файлов в директории проекта
+- Использование существующих тестовых данных
+
+## ПРАВИЛЬНЫЕ ПРИМЕРЫ:
+```python
+# Правильно - используем фикстуру
+from tests.conftest_helpers import create_test_config
+config = create_test_config("esp32", "esp32dev")
+
+# Правильно - читаем из фикстуры
+with open("py/tests/fixtures/test_config.yaml", "r") as f:
+    config = f.read()
+```
+
+## НЕПРАВИЛЬНЫЕ ПРИМЕРЫ:
+```python
+# НЕПРАВИЛЬНО - временные файлы
+temp_file = "/tmp/test_config.json"
+temp_dir = tempfile.mkdtemp()
+mkdir -p /tmp/test_validation
+echo 'content' > /tmp/file
+```
+
+## ОБНОВЛЕНИЕ ПРАВИЛ:
+- ВСЕГДА используй существующие тестовые фикстуры
+- НИКОГДА не создавай файлы в `/tmp/`
+- НИКОГДА не используй `tempfile.mkdtemp()`
+- НИКОГДА не создавай временные файлы для тестирования
+- ВСЕГДА используй файлы из `py/tests/fixtures/`

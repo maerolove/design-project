@@ -1,0 +1,55 @@
+---
+description: No temporary fixes or code commenting - fix root problems
+globs: ["**/*.py", "**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"]
+alwaysApply: true
+---
+
+# NO TEMPORARY FIXES RULE
+
+## НЕ УПРОЩАЙ / НЕ ДЕЛАЙ ВРЕМЕННЫЕ ОТКЛЮЧЕНИЯ / НЕ КОММЕНТИРУЙ КОД: НАДО ЧИНИТЬ ИСХОДНУЮ ПРОБЛЕМУ
+
+## Forbidden Actions:
+- **NEVER comment out code** as a "temporary fix"
+- **NEVER disable functionality** with `#` comments
+- **NEVER skip initialization** or error handling
+- **NEVER use placeholder implementations** like `return None`
+- **NEVER ignore errors** or exceptions
+
+## Required Actions:
+- **ALWAYS fix the root cause** of the problem
+- **ALWAYS implement proper error handling**
+- **ALWAYS provide complete implementations**
+- **ALWAYS resolve import issues** properly
+- **ALWAYS fix database schema** compatibility
+- **ALWAYS implement missing functions** correctly
+
+## Examples of WRONG approach:
+```python
+# from database import init_db  # DON'T DO THIS
+# await init_db()  # DON'T DO THIS
+logger.info("Database initialization skipped")  # DON'T DO THIS
+
+def _get_cached_device_name(self, config_id: str) -> Optional[str]:
+    return None  # DON'T DO THIS
+```
+
+## Examples of CORRECT approach:
+```python
+from database import init_db
+await init_db()  # Fix the actual import/database issue
+
+def _get_cached_device_name(self, config_id: str) -> Optional[str]:
+    # Implement proper logic to get device name
+    config_path = self.storage_service.get_config_path(config_id)
+    if config_path and config_path.exists():
+        # Read and parse config properly
+        return self._extract_device_name_from_config(config_path)
+    return "device"
+```
+
+## When encountering errors:
+1. **Analyze the error** - understand what's missing
+2. **Find the root cause** - don't just hide the symptom
+3. **Implement proper solution** - complete, working code
+4. **Test the fix** - ensure it actually works
+5. **Document the solution** - explain what was fixed and why

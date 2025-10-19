@@ -1,0 +1,33 @@
+# FIX OUTDATED CODE RULE
+
+## ИСПРАВЛЯЙ СТАРЫЙ/НЕАКТУАЛЬНЫЙ КОД СРАЗУ ЖЕ
+- **ALWAYS fix outdated code** immediately when found
+- **ALWAYS update deprecated syntax** to modern standards
+- **ALWAYS replace old patterns** with current best practices
+
+## Examples of OUTDATED code to fix:
+- Old ESPHome syntax: `platform: ESP32` → `esp32: { board: esp32dev }`
+- Deprecated `ota:` without `platform: esphome`
+- Old `esphome:` block with `platform` and `board` keys
+- Outdated Python patterns and deprecated libraries
+
+## Required Actions:
+- Immediately update outdated syntax when encountered
+- Test updated code to ensure it works
+- Document what was changed and why
+- Update related documentation and examples
+
+## Examples of CORRECT modern code:
+```yaml
+esphome:
+  name: test-device
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+ota:
+  platform: esphome
+  password: "password"
+```

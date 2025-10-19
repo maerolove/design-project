@@ -1,0 +1,74 @@
+---
+description: Critical application state management rules
+globs: ["**/*.py", "**/main.py", "**/services/**", "**/routers/**"]
+alwaysApply: true
+---
+
+# CRITICAL APPLICATION STATE RULE
+
+## ЛЮБАЯ ОШИБКА - НЕ НОРМА
+- **NEVER accept ANY errors** as normal or expected
+- **ALWAYS treat 500 errors** as critical issues requiring immediate attention
+- **ALWAYS treat 404 errors** as critical issues requiring immediate attention
+- **ALWAYS treat 405 errors** as critical issues requiring immediate attention
+- **ALWAYS treat ANY HTTP error** as critical issues requiring immediate attention
+- **ALWAYS treat non-functional endpoints** as blocking problems
+- **NEVER say "this is expected"** when application has ANY errors
+- **NEVER say "this is normal"** for ANY error responses
+- **NEVER say "this is acceptable"** for ANY error responses
+
+## When Application is Broken:
+1. **IMMEDIATELY identify** the root cause
+2. **IMMEDIATELY fix** the critical issues
+3. **ALWAYS restart services** to apply fixes (use systemctl)
+4. **ALWAYS verify** fixes work through testing
+
+## Critical Error Indicators:
+- 500 Internal Server Error responses
+- 404 Not Found responses
+- 405 Method Not Allowed responses
+- ANY HTTP error responses
+- Abstract class instantiation errors
+- Database connection failures
+- Service initialization failures
+- Missing environment variables
+- Configuration errors
+- Frontend loading errors
+- API endpoint failures
+- Any application malfunction
+
+## Required Actions for Broken State:
+- **ALWAYS restart backend service**: `sudo systemctl restart esphome-backend.service`
+- **ALWAYS check logs**: `sudo journalctl -u esphome-backend.service --lines=50`
+- **ALWAYS test endpoints** after fixes
+- **ALWAYS verify** application functionality
+
+## Service Restart Protocol:
+1. **Apply code fixes** first
+2. **Restart service**: `sudo systemctl restart esphome-backend.service`
+3. **Wait for startup**: `sleep 5`
+4. **Check status**: `sudo systemctl status esphome-backend.service`
+5. **Test endpoints** with Playwright MCP
+6. **Verify functionality** is restored
+
+## NEVER Accept These as Normal:
+- "This is expected behavior"
+- "The application is working as intended" (when it's broken)
+- "These errors are normal"
+- "The broken state is acceptable"
+- "404 is normal for this endpoint"
+- "405 is expected for GET requests"
+- "This error is acceptable"
+- "This is working as designed" (when there are errors)
+- "This is the correct behavior" (when there are errors)
+
+## ALWAYS Treat These as Critical:
+- Application returning 500 errors
+- Services failing to start
+- Database connection issues
+- Configuration problems
+- Abstract class errors
+
+## Exception:
+- Only accept broken state if explicitly told by user
+- Always ask for clarification if unsure about expected behavior

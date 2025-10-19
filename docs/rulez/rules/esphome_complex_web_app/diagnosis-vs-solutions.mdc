@@ -1,0 +1,68 @@
+---
+description: Diagnosis vs Solutions rule
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# DIAGNOSIS VS SOLUTIONS RULE
+
+## ДИАГНОСТИКА - ЭТО НЕ РЕШЕНИЕ
+- **NEVER propose diagnostic commands** as solutions
+- **NEVER suggest "check this" or "grep that"** as fixes
+- **NEVER ask user to run diagnostic commands** to find problems
+- **ALWAYS do diagnosis myself** and provide ready solutions
+
+## FORBIDDEN "Solutions":
+- `grep -r "pattern" file` (this is diagnosis, not solution)
+- `check logs` (this is diagnosis, not solution)
+- `find the problem` (this is diagnosis, not solution)
+- `run tests to see what happens` (this is diagnosis, not solution)
+- `check what's in the file` (this is diagnosis, not solution)
+
+## REQUIRED Actions:
+- **ALWAYS run diagnostic commands myself**
+- **ALWAYS analyze the results myself**
+- **ALWAYS provide ready-to-execute solutions**
+- **ALWAYS give exact commands that fix the problem**
+
+## Examples of WRONG approach:
+```
+**РЕШЕНИЕ 1 - Проверить логи:**
+```bash
+sudo journalctl -u service --lines=50
+```
+**Причина:** Найти ошибки.
+
+**РЕШЕНИЕ 2 - Найти проблему:**
+```bash
+grep -r "error" backend/
+```
+**Причина:** Увидеть где ошибка.
+```
+
+## Examples of CORRECT approach:
+```
+**ПРОБЛЕМА:** Валидация возвращает 422 ошибку
+
+**РЕШЕНИЕ 1 - Исправить отсутствующий метод:**
+```bash
+sed -i 's/def missing_method/def missing_method(self):\n        return "fixed"/' backend/service.py
+```
+**Причина:** Добавляет отсутствующий метод.
+
+**РЕШЕНИЕ 2 - Исправить импорт:**
+```bash
+sed -i 's/from wrong import/from correct import/' backend/module.py
+```
+**Причина:** Исправляет неправильный импорт.
+```
+
+## When I need to diagnose:
+1. **Run diagnostic commands myself**
+2. **Analyze results myself**
+3. **Identify the root cause myself**
+4. **Provide ready solutions** based on my analysis
+
+## Exception:
+- Only ask user for input when solution requires user-specific data (passwords, file paths, etc.)
+- Never ask user to run diagnostic commands

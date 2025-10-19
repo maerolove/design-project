@@ -1,0 +1,32 @@
+# API ENDPOINTS RULE
+
+## ИСПОЛЬЗУЙ ПРАВИЛЬНЫЕ API ENDPOINTS
+- **ALWAYS use correct API URLs** for different environments
+- **ALWAYS use proper endpoint paths** without unnecessary prefixes
+- **ALWAYS test API endpoints** before using them
+
+## API Configuration:
+- **Production Backend**: `https://api.kolkhoz.io` (NO `/api` prefix!)
+- **Local Backend**: `http://localhost:8000`
+- **Frontend**: `https://app.kolkhoz.io` (production) or `http://localhost:3000` (local)
+
+## Endpoint Paths:
+- **Validation**: `/validate` (not `/api/validate`)
+- **Compilation**: `/compile` (not `/api/compile`)
+- **Status**: `/status` (not `/api/status`)
+- **Download**: `/download` (not `/api/download`)
+
+## Testing Commands:
+```bash
+# Test validation
+curl -X POST "http://localhost:8000/validate" -H "Content-Type: application/json" -d '{"yaml_text": "..."}'
+
+# Test compilation  
+curl -X POST "http://localhost:8000/compile" -H "Content-Type: application/json" -d '{"yaml_text": "..."}'
+```
+
+## Rules:
+- Never add `/api/` prefix to endpoints
+- Always use correct base URL for environment
+- Always test endpoints before using in code
+- Always check API documentation for changes

@@ -1,0 +1,29 @@
+# FRONTEND BUILD RULE
+
+## ВСЕГДА СОБИРАЙ ФРОНТЕНД ПОСЛЕ ИЗМЕНЕНИЙ
+- **ALWAYS build frontend** after making JavaScript/React changes
+- **NEVER restart backend** for frontend changes  
+- **ALWAYS run `npm run build`** in frontend directory after code changes
+- **NEVER assume** frontend changes apply automatically
+- **ALWAYS rebuild** before testing frontend functionality
+
+## Required Actions:
+- After changing any `.js`, `.jsx`, `.css` files in frontend
+- Run: `cd /home/app/frontend && npm run build`
+- Wait for build completion
+- Then test functionality
+
+## Examples of WRONG behavior:
+- Making frontend changes and testing immediately
+- Restarting backend for frontend changes
+- Assuming changes apply without build
+
+## Examples of CORRECT behavior:
+- Make frontend changes
+- Run `npm run build`
+- Wait for completion
+- Test functionality
+
+## Exception:
+- Only restart backend when backend code changes
+- Always build frontend when frontend code changes

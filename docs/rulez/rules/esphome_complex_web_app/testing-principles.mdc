@@ -1,0 +1,36 @@
+# TESTING PRINCIPLES RULE
+
+## СЛЕДУЙ ПРИНЦИПАМ ТЕСТИРОВАНИЯ БЕЗ МОКОВ
+- **ALWAYS use real services** in tests, not mocks
+- **ALWAYS test with Docker containers** for isolation
+- **ALWAYS use existing test fixtures** instead of temporary files
+
+## Core Testing Principles:
+- **No-Mock Testing**: Use real ESPHome Docker containers
+- **Deterministic Tests**: Fixed ESPHome versions (2025.5.2)
+- **Docker-first**: All tests run in Docker containers
+- **Use Test Fixtures**: Leverage existing test configurations
+
+## Forbidden Actions:
+- Creating temporary files for testing
+- Using mocks for ESPHome services
+- Hardcoded test data instead of fixtures
+- Skipping Docker isolation
+
+## Required Actions:
+- Use `py/tests/conftest_helpers.py` for test configs
+- Use `py/tests/e2e/test_frontend_base.py` for E2E configs
+- Test with real ESPHome Docker containers
+- Update test fixtures when syntax changes
+
+## Browser Testing with Playwright:
+- **Use Playwright MCP tools** for E2E browser testing
+- **Test real user workflows** through browser automation
+- **Capture screenshots** for visual verification
+- **Handle CAPTCHAs** and rate limiting gracefully
+
+## Examples:
+- Use `create_test_config()` from conftest_helpers
+- Use `get_esp32_config()` from test_frontend_base
+- Test with modern ESPHome syntax in fixtures
+- Use `browser_navigate()` and `browser_click()` for E2E tests
