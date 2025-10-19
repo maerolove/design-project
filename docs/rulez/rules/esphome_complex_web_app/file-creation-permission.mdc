@@ -1,0 +1,31 @@
+---
+description: File creation permission requirements
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# File Creation Permission Rules
+
+## ВСЕГДА СПРАШИВАЙ РАЗРЕШЕНИЕ НА СОЗДАНИЕ ФАЙЛОВ
+- Never create files without explicit user permission
+- Always ask before creating any new files
+- This includes documentation, configuration, and code files
+
+## Required permissions for:
+- New source code files
+- Configuration files
+- Documentation files (*.md, *.txt)
+- Environment files (.env, .config)
+- Build artifacts
+- Temporary files
+
+## Exception: Only create files when:
+- Explicitly requested by user with specific file name
+- User provides clear instruction to create specific file
+- File is required for immediate debugging/testing
+
+## Always confirm:
+- File name and location
+- File content and purpose
+- Whether file should be temporary or permanent
+- Any specific formatting or structure requirements

@@ -1,0 +1,19 @@
+---
+description: Localhost is production rule
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# LOCALHOST IS PRODUCTION RULE
+
+## LOCALHOST:8000 И ПРОДАКШЕН - ОДНО И ТО ЖЕ
+- **localhost:8000** и **api.kolkhoz.io** - это один и тот же сервер
+- **NEVER assume** they are different environments
+- **NEVER suggest** changing URLs between localhost and production
+- **ALWAYS treat** localhost:8000 as production server
+
+## When tests fail on localhost:8000:
+- **ALWAYS fix the actual problem** in the test or code
+- **NEVER suggest** changing to different URL
+- **NEVER assume** localhost is different from production
+- **ALWAYS debug** the real issue causing test failure

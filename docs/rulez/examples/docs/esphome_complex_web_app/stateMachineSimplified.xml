@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<stateMachine version="2.0.0" description="Simplified State Machine Architecture - Independent State Machines">
+  
+  <!-- Main Configuration Flow -->
+  <machine type="main" name="Main Configuration Flow" description="Core configuration editing, validation, and compilation flow">
+    <states>
+      <state name="INITIAL" value="initial" type="initial"/>
+      <state name="EDITING" value="editing" type="process"/>
+      <state name="VALIDATING" value="validating" type="active"/>
+      <state name="VALID" value="valid" type="success"/>
+      <state name="INVALID" value="invalid" type="error"/>
+      <state name="COMPILING" value="compiling" type="active"/>
+      <state name="COMPILED" value="compiled" type="success"/>
+      <state name="COMPILATION_FAILED" value="compilation_failed" type="error"/>
+      <state name="DOWNLOADING" value="downloading" type="active"/>
+      <state name="DOWNLOADING_OTA" value="downloading_ota" type="active"/>
+    </states>
+    
+    <transitions>
+      <transition name="NEW_CONFIG" value="new_config" type="system"/>
+      <transition name="EDIT_YAML" value="edit_yaml" type="action"/>
+      <transition name="VALIDATE" value="validate" type="action"/>
+      <!-- Убраны VALIDATION_SUCCESS и VALIDATION_ERROR - используем прямые переходы -->
+      <transition name="COMPILE" value="compile" type="action"/>
+      <transition name="COMPILING" value="compiling" type="action"/>
+      <!-- Убраны COMPILATION_SUCCESS и COMPILATION_ERROR - используем прямые переходы -->
+      <transition name="DOWNLOAD" value="download" type="action"/>
+      <transition name="DOWNLOAD_OTA" value="download_ota" type="action"/>
+      <transition name="DOWNLOAD_SUCCESS" value="download_success" type="result"/>
+      <transition name="DOWNLOAD_ERROR" value="download_error" type="result"/>
+    </transitions>
+    
+    <stateTransitions>
+      <fromState name="INITIAL">
+        <toTransition>NEW_CONFIG</toTransition>
+        <toTransition>VALIDATE</toTransition>
+        <toTransition>COMPILE</toTransition>
+        <toTransition>COMPILING</toTransition>
+        <toTransition>COMPILED</toTransition>
+      </fromState>
+      <fromState name="EDITING">
+        <toTransition>VALIDATE</toTransition>
+        <toTransition>EDIT_YAML</toTransition>
+        <toTransition>NEW_CONFIG</toTransition>
+      </fromState>
+      <fromState name="VALIDATING">
+        <toTransition>VALID</toTransition>
+        <toTransition>INVALID</toTransition>
+        <toTransition>EDIT_YAML</toTransition>
+        <toTransition>NEW_CONFIG</toTransition>
+      </fromState>
+      <fromState name="VALID">
+        <toTransition>COMPILE</toTransition>
+        <toTransition>COMPILING</toTransition>
+        <toTransition>EDIT_YAML</toTransition>
+        <toTransition>VALIDATE</toTransition>
+        <toTransition>NEW_CONFIG</toTransition>
+      </fromState>
+      <fromState name="INVALID">
+        <toTransition>EDIT_YAML</toTransition>
+        <toTransition>VALIDATE</toTransition>
+        <toTransition>NEW_CONFIG</toTransition>
+      </fromState>
+      <fromState name="COMPILING">
+        <toTransition>COMPILED</toTransition>
+        <toTransition>COMPILATION_FAILED</toTransition>
+        <toTransition>EDIT_YAML</toTransition>
+        <toTransition>NEW_CONFIG</toTransition>
+      </fromState>
+      <fromState name="COMPILED">
+        <toTransition>DOWNLOAD</toTransition>
+        <toTransition>DOWNLOAD_OTA</toTransition>
+        <toTransition>EDIT_YAML</toTransition>
+        <toTransition>COMPILE</toTransition>
+        <toTransition>NEW_CONFIG</toTransition>
+      </fromState>
+      <fromState name="COMPILATION_FAILED">
+        <toTransition>EDIT_YAML</toTransition>
+        <toTransition>VALIDATE</toTransition>
+        <toTransition>COMPILE</toTransition>
+        <toTransition>NEW_CONFIG</toTransition>
+      </fromState>
+      <fromState name="DOWNLOADING">
+        <toTransition>DOWNLOAD_SUCCESS</toTransition>
+        <toTransition>DOWNLOAD_ERROR</toTransition>
+        <toTransition>EDIT_YAML</toTransition>
+        <toTransition>NEW_CONFIG</toTransition>
+      </fromState>
+      <fromState name="DOWNLOADING_OTA">
+        <toTransition>DOWNLOAD_SUCCESS</toTransition>
+        <toTransition>DOWNLOAD_ERROR</toTransition>
+        <toTransition>EDIT_YAML</toTransition>
+        <toTransition>NEW_CONFIG</toTransition>
+      </fromState>
+    </stateTransitions>
+    
+    <data>
+      <field name="fileName" type="string" default=""/>
+      <field name="logData" type="array" default="[]"/>
+      <field name="compilationResult" type="object" default="null"/>
+      <field name="validationResult" type="object" default="null"/>
+      <field name="hasStartedCompilation" type="boolean" default="false"/>
+    </data>
+  </machine>
+  
+  <!-- QEMU Emulation Flow -->
+  <machine type="qemu" name="QEMU Emulation Flow" description="Device emulation and testing flow">
+    <states>
+      <state name="QEMU_IDLE" value="qemu_idle" type="idle"/>
+      <state name="QEMU_STARTING" value="qemu_starting" type="active"/>
+      <state name="QEMU_RUNNING" value="qemu_running" type="success"/>
+      <state name="QEMU_STOPPING" value="qemu_stopping" type="active"/>
+      <state name="QEMU_STOPPED" value="qemu_stopped" type="idle"/>
+      <state name="QEMU_FAILED" value="qemu_failed" type="error"/>
+    </states>
+    
+    <transitions>
+      <transition name="START_QEMU" value="start_qemu" type="action"/>
+      <transition name="STOP_QEMU" value="stop_qemu" type="action"/>
+      <transition name="QEMU_START_SUCCESS" value="qemu_start_success" type="result"/>
+      <transition name="QEMU_START_ERROR" value="qemu_start_error" type="result"/>
+      <transition name="QEMU_STOP_SUCCESS" value="qemu_stop_success" type="result"/>
+      <transition name="QEMU_STOP_ERROR" value="qemu_stop_error" type="result"/>
+      <transition name="QEMU_CRASH" value="qemu_crash" type="error"/>
+      <transition name="SEND_COMMAND" value="send_command" type="action"/>
+    </transitions>
+    
+    <stateTransitions>
+      <fromState name="QEMU_IDLE">
+        <toTransition>START_QEMU</toTransition>
+      </fromState>
+      <fromState name="QEMU_STARTING">
+        <toTransition>QEMU_START_SUCCESS</toTransition>
+        <toTransition>QEMU_START_ERROR</toTransition>
+        <toTransition>STOP_QEMU</toTransition>
+      </fromState>
+      <fromState name="QEMU_RUNNING">
+        <toTransition>STOP_QEMU</toTransition>
+        <toTransition>QEMU_CRASH</toTransition>
+        <toTransition>SEND_COMMAND</toTransition>
+      </fromState>
+      <fromState name="QEMU_STOPPING">
+        <toTransition>QEMU_STOP_SUCCESS</toTransition>
+        <toTransition>QEMU_STOP_ERROR</toTransition>
+      </fromState>
+      <fromState name="QEMU_STOPPED">
+        <toTransition>START_QEMU</toTransition>
+      </fromState>
+      <fromState name="QEMU_FAILED">
+        <toTransition>START_QEMU</toTransition>
+      </fromState>
+    </stateTransitions>
+  </machine>
+  
+  <!-- Template Management Flow -->
+  <machine type="template" name="Template Management Flow" description="Template browsing, selection, and customization flow">
+    <states>
+      <state name="TEMPLATE_IDLE" value="template_idle" type="idle"/>
+      <state name="TEMPLATE_BROWSING" value="template_browsing" type="process"/>
+      <state name="TEMPLATE_LOADING" value="template_loading" type="active"/>
+      <state name="TEMPLATE_CUSTOMIZING" value="template_customizing" type="process"/>
+      <state name="TEMPLATE_APPLIED" value="template_applied" type="success"/>
+    </states>
+    
+    <transitions>
+      <transition name="BROWSE_TEMPLATES" value="browse_templates" type="action"/>
+      <transition name="SELECT_TEMPLATE" value="select_template" type="action"/>
+      <transition name="LOAD_TEMPLATE" value="load_template" type="action"/>
+      <transition name="TEMPLATE_LOAD_SUCCESS" value="template_load_success" type="result"/>
+      <transition name="TEMPLATE_LOAD_ERROR" value="template_load_error" type="result"/>
+      <transition name="APPLY_TEMPLATE" value="apply_template" type="action"/>
+      <transition name="TEMPLATE_APPLY_SUCCESS" value="template_apply_success" type="result"/>
+      <transition name="CANCEL_TEMPLATE" value="cancel_template" type="action"/>
+      <transition name="CLOSE_CATALOG" value="close_catalog" type="action"/>
+    </transitions>
+    
+    <stateTransitions>
+      <fromState name="TEMPLATE_IDLE">
+        <toTransition>BROWSE_TEMPLATES</toTransition>
+      </fromState>
+      <fromState name="TEMPLATE_BROWSING">
+        <toTransition>SELECT_TEMPLATE</toTransition>
+        <toTransition>CLOSE_CATALOG</toTransition>
+      </fromState>
+      <fromState name="TEMPLATE_LOADING">
+        <toTransition>TEMPLATE_LOAD_SUCCESS</toTransition>
+        <toTransition>TEMPLATE_LOAD_ERROR</toTransition>
+      </fromState>
+      <fromState name="TEMPLATE_CUSTOMIZING">
+        <toTransition>APPLY_TEMPLATE</toTransition>
+        <toTransition>CANCEL_TEMPLATE</toTransition>
+      </fromState>
+      <fromState name="TEMPLATE_APPLIED">
+        <toTransition>BROWSE_TEMPLATES</toTransition>
+      </fromState>
+    </stateTransitions>
+  </machine>
+  
+  <!-- Social Features Flow -->
+  <machine type="social" name="Social Features Flow" description="Social interactions, comments, and ratings flow">
+    <states>
+      <state name="SOCIAL_IDLE" value="social_idle" type="idle"/>
+      <state name="SOCIAL_INTERACTING" value="social_interacting" type="process"/>
+      <state name="COMMENTING" value="commenting" type="process"/>
+      <state name="RATING" value="rating" type="process"/>
+    </states>
+    
+    <transitions>
+      <transition name="START_SOCIAL_INTERACTION" value="start_social_interaction" type="action"/>
+      <transition name="LIKE_TEMPLATE" value="like_template" type="action"/>
+      <transition name="ADD_COMMENT" value="add_comment" type="action"/>
+      <transition name="POST_COMMENT" value="post_comment" type="action"/>
+      <transition name="RATE_TEMPLATE" value="rate_template" type="action"/>
+      <transition name="SUBMIT_RATING" value="submit_rating" type="action"/>
+      <transition name="CLOSE_SOCIAL" value="close_social" type="action"/>
+    </transitions>
+    
+    <stateTransitions>
+      <fromState name="SOCIAL_IDLE">
+        <toTransition>START_SOCIAL_INTERACTION</toTransition>
+      </fromState>
+      <fromState name="SOCIAL_INTERACTING">
+        <toTransition>ADD_COMMENT</toTransition>
+        <toTransition>RATE_TEMPLATE</toTransition>
+        <toTransition>LIKE_TEMPLATE</toTransition>
+        <toTransition>CLOSE_SOCIAL</toTransition>
+      </fromState>
+      <fromState name="COMMENTING">
+        <toTransition>POST_COMMENT</toTransition>
+        <toTransition>CLOSE_SOCIAL</toTransition>
+      </fromState>
+      <fromState name="RATING">
+        <toTransition>SUBMIT_RATING</toTransition>
+        <toTransition>CLOSE_SOCIAL</toTransition>
+      </fromState>
+    </stateTransitions>
+  </machine>
+  
+  <!-- Favorites Management Flow -->
+  <machine type="favorite" name="Favorites Management Flow" description="Save and load favorite configurations flow">
+    <states>
+      <state name="FAVORITE_IDLE" value="favorite_idle" type="idle"/>
+      <state name="FAVORITE_SAVING" value="favorite_saving" type="active"/>
+      <state name="FAVORITE_SAVED" value="favorite_saved" type="success"/>
+      <state name="FAVORITE_LOADING" value="favorite_loading" type="active"/>
+    </states>
+    
+    <transitions>
+      <transition name="SAVE_FAVORITE" value="save_favorite" type="action"/>
+      <transition name="LOAD_FAVORITE" value="load_favorite" type="action"/>
+      <transition name="FAVORITE_SAVE_SUCCESS" value="favorite_save_success" type="result"/>
+      <transition name="FAVORITE_LOAD_SUCCESS" value="favorite_load_success" type="result"/>
+      <transition name="FAVORITE_ERROR" value="favorite_error" type="result"/>
+    </transitions>
+    
+    <stateTransitions>
+      <fromState name="FAVORITE_IDLE">
+        <toTransition>SAVE_FAVORITE</toTransition>
+        <toTransition>LOAD_FAVORITE</toTransition>
+      </fromState>
+      <fromState name="FAVORITE_SAVING">
+        <toTransition>FAVORITE_SAVE_SUCCESS</toTransition>
+        <toTransition>FAVORITE_ERROR</toTransition>
+      </fromState>
+      <fromState name="FAVORITE_SAVED">
+        <toTransition>SAVE_FAVORITE</toTransition>
+        <toTransition>LOAD_FAVORITE</toTransition>
+      </fromState>
+      <fromState name="FAVORITE_LOADING">
+        <toTransition>FAVORITE_LOAD_SUCCESS</toTransition>
+        <toTransition>FAVORITE_ERROR</toTransition>
+      </fromState>
+    </stateTransitions>
+  </machine>
+  
+  <!-- Configuration Sharing Flow -->
+  <machine type="share" name="Configuration Sharing Flow" description="Create and manage shared configuration links flow">
+    <states>
+      <state name="SHARE_IDLE" value="share_idle" type="idle"/>
+      <state name="SHARING" value="sharing" type="process"/>
+      <state name="SHARE_CREATED" value="share_created" type="success"/>
+    </states>
+    
+    <transitions>
+      <transition name="SHARE_CONFIG" value="share_config" type="action"/>
+      <transition name="CREATE_LINK" value="create_link" type="action"/>
+      <transition name="COPY_LINK" value="copy_link" type="action"/>
+      <transition name="CLOSE_SHARE" value="close_share" type="action"/>
+    </transitions>
+    
+    <stateTransitions>
+      <fromState name="SHARE_IDLE">
+        <toTransition>SHARE_CONFIG</toTransition>
+      </fromState>
+      <fromState name="SHARING">
+        <toTransition>CREATE_LINK</toTransition>
+        <toTransition>CLOSE_SHARE</toTransition>
+      </fromState>
+      <fromState name="SHARE_CREATED">
+        <toTransition>COPY_LINK</toTransition>
+        <toTransition>CLOSE_SHARE</toTransition>
+      </fromState>
+    </stateTransitions>
+  </machine>
+  
+  <!-- System Management Flow -->
+  <machine type="system" name="System Management Flow" description="System-level operations like auto-save and session management">
+    <states>
+      <state name="SYSTEM_IDLE" value="system_idle" type="idle"/>
+      <state name="AUTO_SAVING" value="auto_saving" type="active"/>
+      <state name="SESSION_TIMEOUT" value="session_timeout" type="warning"/>
+      <state name="ERROR" value="error" type="error"/>
+      <state name="RECOVERY_OPTIONS" value="recovery_options" type="process"/>
+    </states>
+    
+    <transitions>
+      <transition name="AUTO_SAVE" value="auto_save" type="action"/>
+      <transition name="TIMEOUT" value="timeout" type="system"/>
+      <transition name="ERROR_OCCURRED" value="error_occurred" type="system"/>
+      <transition name="RETRY" value="retry" type="action"/>
+      <transition name="CONTINUE" value="continue" type="action"/>
+      <transition name="RELOAD_PAGE" value="reload_page" type="action"/>
+      <transition name="SYSTEM_IDLE" value="system_idle" type="system"/>
+      <transition name="RECOVERY_OPTIONS" value="recovery_options" type="system"/>
+    </transitions>
+    
+    <stateTransitions>
+      <fromState name="SYSTEM_IDLE">
+        <toTransition>AUTO_SAVE</toTransition>
+        <toTransition>TIMEOUT</toTransition>
+        <toTransition>ERROR_OCCURRED</toTransition>
+      </fromState>
+      <fromState name="AUTO_SAVING">
+        <toTransition>SYSTEM_IDLE</toTransition>
+      </fromState>
+      <fromState name="SESSION_TIMEOUT">
+        <toTransition>SYSTEM_IDLE</toTransition>
+      </fromState>
+      <fromState name="ERROR">
+        <toTransition>RECOVERY_OPTIONS</toTransition>
+      </fromState>
+      <fromState name="RECOVERY_OPTIONS">
+        <toTransition>RETRY</toTransition>
+        <toTransition>CONTINUE</toTransition>
+        <toTransition>RELOAD_PAGE</toTransition>
+      </fromState>
+    </stateTransitions>
+  </machine>
+  
+  <!-- Global Transitions -->
+  <globalTransitions>
+    <transition name="NEW_CONFIG" description="Resets all state machines to initial state"/>
+    <transition name="ERROR_OCCURRED" description="Can transition any state machine to error state"/>
+    <transition name="SYSTEM_SHUTDOWN" description="Graceful shutdown of all state machines"/>
+  </globalTransitions>
+  
+  <!-- State Machine Interactions -->
+  <interactions>
+    <interaction from="main" to="qemu" description="QEMU can only start from COMPILED state in main flow"/>
+    <interaction from="main" to="template" description="Template can be applied to any state in main flow"/>
+    <interaction from="template" to="social" description="Social features available when browsing templates"/>
+    <interaction from="any" to="system" description="System operations can occur from any state machine"/>
+  </interactions>
+  
+  <!-- CSS Classes -->
+  <cssClasses>
+    <machine type="main">
+      <state name="INITIAL" class="state-initial"/>
+      <state name="EDITING" class="state-editing"/>
+      <state name="VALIDATING" class="validation-validating"/>
+      <state name="VALID" class="validation-valid"/>
+      <state name="INVALID" class="validation-invalid"/>
+      <state name="COMPILING" class="compilation-compiling"/>
+      <state name="COMPILED" class="compilation-complete"/>
+      <state name="COMPILATION_FAILED" class="compilation-failed"/>
+      <state name="DOWNLOADING" class="download-downloading"/>
+      <state name="DOWNLOADING_OTA" class="download-downloading-ota"/>
+    </machine>
+    <machine type="qemu">
+      <state name="QEMU_IDLE" class="qemu-idle"/>
+      <state name="QEMU_STARTING" class="qemu-starting"/>
+      <state name="QEMU_RUNNING" class="qemu-running"/>
+      <state name="QEMU_STOPPING" class="qemu-stopping"/>
+      <state name="QEMU_STOPPED" class="qemu-stopped"/>
+      <state name="QEMU_FAILED" class="qemu-failed"/>
+    </machine>
+    <machine type="template">
+      <state name="TEMPLATE_IDLE" class="template-idle"/>
+      <state name="TEMPLATE_BROWSING" class="template-browsing"/>
+      <state name="TEMPLATE_LOADING" class="template-loading"/>
+      <state name="TEMPLATE_CUSTOMIZING" class="template-customizing"/>
+      <state name="TEMPLATE_APPLIED" class="template-applied"/>
+    </machine>
+    <machine type="social">
+      <state name="SOCIAL_IDLE" class="social-idle"/>
+      <state name="SOCIAL_INTERACTING" class="social-interacting"/>
+      <state name="COMMENTING" class="social-commenting"/>
+      <state name="RATING" class="social-rating"/>
+    </machine>
+    <machine type="favorite">
+      <state name="FAVORITE_IDLE" class="favorite-idle"/>
+      <state name="FAVORITE_SAVING" class="favorite-saving"/>
+      <state name="FAVORITE_SAVED" class="favorite-saved"/>
+      <state name="FAVORITE_LOADING" class="favorite-loading"/>
+    </machine>
+    <machine type="share">
+      <state name="SHARE_IDLE" class="share-idle"/>
+      <state name="SHARING" class="sharing"/>
+      <state name="SHARE_CREATED" class="share-created"/>
+    </machine>
+    <machine type="system">
+      <state name="SYSTEM_IDLE" class="system-idle"/>
+      <state name="AUTO_SAVING" class="auto-saving"/>
+      <state name="SESSION_TIMEOUT" class="session-timeout"/>
+      <state name="ERROR" class="error"/>
+      <state name="RECOVERY_OPTIONS" class="recovery-options"/>
+    </machine>
+  </cssClasses>
+  
+  <!-- Active States (show spinner) -->
+  <activeStates>
+    <state>VALIDATING</state>
+    <state>COMPILING</state>
+    <state>DOWNLOADING</state>
+    <state>DOWNLOADING_OTA</state>
+    <state>QEMU_STARTING</state>
+    <state>QEMU_STOPPING</state>
+    <state>TEMPLATE_LOADING</state>
+    <state>FAVORITE_SAVING</state>
+    <state>FAVORITE_LOADING</state>
+    <state>AUTO_SAVING</state>
+  </activeStates>
+  
+  <!-- Success States -->
+  <successStates>
+    <state>VALID</state>
+    <state>COMPILED</state>
+    <state>QEMU_RUNNING</state>
+    <state>TEMPLATE_APPLIED</state>
+    <state>FAVORITE_SAVED</state>
+    <state>SHARE_CREATED</state>
+  </successStates>
+  
+  <!-- Error States -->
+  <errorStates>
+    <state>INVALID</state>
+    <state>COMPILATION_FAILED</state>
+    <state>QEMU_FAILED</state>
+    <state>ERROR</state>
+  </errorStates>
+  
+</stateMachine>

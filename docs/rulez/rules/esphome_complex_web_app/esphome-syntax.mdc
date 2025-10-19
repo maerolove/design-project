@@ -1,0 +1,54 @@
+# ESPHOME SYNTAX RULE
+
+## ИСПОЛЬЗУЙ СОВРЕМЕННЫЙ СИНТАКСИС ESPHOME
+- **ALWAYS use modern ESPHome syntax** (2025.5.2+)
+- **ALWAYS avoid deprecated syntax** patterns
+- **ALWAYS test with latest ESPHome Docker image**
+
+## Modern ESPHome Syntax:
+```yaml
+esphome:
+  name: device-name
+
+esp32:  # or esp8266:
+  board: esp32dev
+  framework:
+    type: arduino
+
+wifi:
+  ssid: "wifi-name"
+  password: "wifi-password"
+
+api:
+  password: "api-password"
+
+ota:
+  platform: esphome  # REQUIRED!
+  password: "ota-password"
+
+logger:
+  level: INFO
+```
+
+## Deprecated Syntax (DON'T USE):
+```yaml
+esphome:
+  name: device-name
+  platform: ESP32  # DEPRECATED!
+  board: esp32dev   # DEPRECATED!
+
+ota:
+  password: "ota-password"  # MISSING platform: esphome!
+```
+
+## Key Changes:
+- `platform` and `board` moved from `esphome:` to `esp32:`/`esp8266:`
+- `ota:` requires `platform: esphome`
+- Use `esp32:` or `esp8266:` top-level blocks
+- Framework type must be specified
+
+## Rules:
+- Always use modern syntax in new code
+- Always update old syntax when found
+- Always test with ESPHome 2025.5.2+
+- Always validate syntax with Docker container

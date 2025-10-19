@@ -1,0 +1,133 @@
+---
+description: Python import rules for ESPHome YAML Constructor project
+globs: ["**/*.py"]
+alwaysApply: true
+---
+
+# PYTHON IMPORTS RULE
+
+## ПРАВИЛЬНЫЕ ИМПОРТЫ ДЛЯ ПРОЕКТА ESPHOME YAML CONSTRUCTOR
+
+### АБСОЛЮТНЫЕ ИМПОРТЫ - ОСНОВНОЕ ПРАВИЛО
+- **ALWAYS use absolute imports** from project root
+- **NEVER use relative imports** (`from ..module` or `from ...module`)
+- **ALWAYS import from project root** (`backend/` directory)
+
+### ПРАВИЛЬНЫЕ ПРИМЕРЫ ИМПОРТОВ:
+
+#### Из корня проекта (backend/):
+```python
+# Правильно - абсолютные импорты
+from config import get_settings
+from exceptions import ValidationError, CompilationError
+from utils.validation import validate_yaml_content
+from utils.file_utils import write_yaml_file, read_yaml_file
+from utils.logging_utils import LoggerMixin
+from config_manager import ConfigManager
+```
+
+#### Из подмодулей services/:
+```python
+# Правильно - абсолютные импорты
+from services.base_service import BaseService
+from services.storage_service import StorageService
+from services.enhanced_cache_service import get_enhanced_cache_service
+from services.docker.docker_manager import DockerManager
+from services.config.base import ConfigServiceBase
+```
+
+#### Из подмодулей utils/:
+```python
+# Правильно - абсолютные импорты
+from utils.validation import validate_required_fields
+from utils.file_utils import ensure_directory_exists
+from utils.logger_config import get_docker_logger
+```
+
+### НЕПРАВИЛЬНЫЕ ПРИМЕРЫ ИМПОРТОВ:
+
+#### Относительные импорты (ЗАПРЕЩЕНО):
+```python
+# НЕПРАВИЛЬНО - относительные импорты
+from ..config import get_settings
+from ...config import get_settings
+from ..exceptions import ValidationError
+from ..utils.validation import validate_yaml_content
+from ...services.base_service import BaseService
+```
+
+#### Импорты с точками (ЗАПРЕЩЕНО):
+```python
+# НЕПРАВИЛЬНО - импорты с точками
+from .config import get_settings
+from .exceptions import ValidationError
+from .utils.validation import validate_yaml_content
+```
+
+### СТРУКТУРА ПРОЕКТА ДЛЯ ИМПОРТОВ:
+
+```
+backend/                    # Корень проекта - рабочая директория
+├── main.py                 # Точка входа
+├── config.py              # from config import get_settings
+├── exceptions.py           # from exceptions import ValidationError
+├── config_manager.py       # from config_manager import ConfigManager
+├── services/               # from services.module import Class
+│   ├── base_service.py
+│   ├── storage_service.py
+│   ├── enhanced_cache_service.py
+│   ├── config/
+│   │   └── base.py        # from services.config.base import ConfigServiceBase
+│   └── docker/
+│       └── docker_manager.py  # from services.docker.docker_manager import DockerManager
+└── utils/                  # from utils.module import function
+    ├── validation.py
+    ├── file_utils.py
+    └── logging_utils.py
+```
+
+### ПРАВИЛА ДЛЯ РАЗНЫХ ТИПОВ ФАЙЛОВ:
+
+#### main.py и точки входа:
+```python
+# Всегда абсолютные импорты
+from esphome import main_router
+from config import get_settings
+from services.esphome_service import ESPHomeService
+```
+
+#### Файлы в services/:
+```python
+# Всегда абсолютные импорты
+from config import get_settings
+from exceptions import ValidationError
+from utils.validation import validate_yaml_content
+from .base_service import BaseService  # Только для файлов в той же директории
+```
+
+#### Файлы в utils/:
+```python
+# Всегда абсолютные импорты
+from config import get_settings
+from exceptions import ValidationError
+```
+
+### ИСКЛЮЧЕНИЯ:
+- **Только для файлов в одной директории**: можно использовать `from .module import Class`
+- **Только для __init__.py**: можно использовать относительные импорты для экспорта
+
+### КОМАНДЫ ДЛЯ ПРОВЕРКИ ИМПОРТОВ:
+```bash
+# Найти все относительные импорты (должны быть исправлены)
+grep -r "from \.\." backend/
+grep -r "from \." backend/
+
+# Проверить что все импорты работают
+cd backend && python -c "import main"
+```
+
+### ОБНОВЛЕНИЕ ПРАВИЛ:
+- **ALWAYS use absolute imports** from project root
+- **NEVER use relative imports** beyond same directory
+- **ALWAYS test imports** after changes
+- **ALWAYS fix import errors** immediately

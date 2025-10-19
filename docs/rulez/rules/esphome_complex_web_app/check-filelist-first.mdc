@@ -1,0 +1,29 @@
+---
+description: Check FILELIST first rule
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# CHECK FILELIST FIRST RULE
+
+## ВСЕГДА СНАЧАЛА ПРОВЕРЯЙ FILELIST
+- **ALWAYS check FILELIST first** before creating directories
+- **ALWAYS use paths from FILELIST** instead of guessing
+- **NEVER create directories** without checking FILELIST
+- **ALWAYS follow project structure** defined in FILELIST
+
+## When you see path errors:
+1. **Check FILELIST first** - see what paths should exist
+2. **Use correct paths** from FILELIST
+3. **Don't create random directories** outside project structure
+4. **Follow the established structure**
+
+## Examples of WRONG behavior:
+- Seeing "/home/cache" error → creating /home/cache
+- Seeing path error → guessing where to create directory
+- Not checking FILELIST before fixing paths
+
+## Examples of CORRECT behavior:
+- Seeing "/home/cache" error → check FILELIST → use data/cache/
+- Seeing path error → check FILELIST → use correct project path
+- Always reference FILELIST for project structure

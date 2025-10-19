@@ -1,0 +1,36 @@
+---
+description: Fix obvious errors rule
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# FIX OBVIOUS ERRORS RULE
+
+## ИСПРАВЛЯЙ ОЧЕВИДНЫЕ ОШИБКИ СРАЗУ
+- **ALWAYS fix obvious errors** when you see them
+- **NEVER continue debugging** when the error is clear
+- **NEVER ask for more information** when the solution is obvious
+- **ALWAYS act immediately** on clear error messages
+
+## Examples of OBVIOUS errors to fix immediately:
+- `Permission denied: '/home/cache'` → fix permissions
+- `No such file or directory` → create the file/directory
+- `ModuleNotFoundError: No module named 'X'` → install the module
+- `Connection refused` → start the service
+- `Port already in use` → kill the process using the port
+
+## Examples of WRONG behavior:
+- Seeing "Permission denied" and asking "what should I do?"
+- Seeing "No such file" and continuing to debug
+- Seeing clear error and asking for more information
+
+## Examples of CORRECT behavior:
+- Seeing "Permission denied" → immediately fix permissions
+- Seeing "No such file" → immediately create the file
+- Seeing clear error → immediately fix it
+
+## When you see an obvious error:
+1. **Fix it immediately** - don't ask questions
+2. **Don't continue debugging** - the problem is clear
+3. **Don't ask for permission** - just fix it
+4. **Move to the next step** after fixing

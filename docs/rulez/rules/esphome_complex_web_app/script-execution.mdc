@@ -1,0 +1,35 @@
+---
+description: Script execution and process management rules
+globs: ["**/*.py", "**/main.py", "**/requirements.txt"]
+alwaysApply: true
+---
+
+# Script Execution Rules
+
+## NEVER run scripts directly
+- Never execute `python main.py` or similar commands directly
+- Never run long-running processes without proper management
+
+## Only use these execution methods:
+1. **Timeout mechanisms** - with explicit timeout limits
+2. **Task schedulers** - cron, systemd timers, celery
+3. **System services** - systemd, supervisor, pm2
+4. **Docker containers** - as last resort for isolation
+
+## Process Management Requirements:
+- Always use background execution for long-running processes
+- Use proper process management tools (systemd, supervisor)
+- Set appropriate resource limits and timeouts
+- Implement proper logging and monitoring
+- Use health checks for service validation
+
+## Examples of CORRECT usage:
+- `sudo systemctl start/restart service-name`
+- `timeout 30s command`
+- `nohup command &`
+- `docker run -d container-name`
+
+## Examples of INCORRECT usage:
+- `python main.py` (direct execution)
+- `./script.sh` (without timeout/management)
+- Long-running commands without background execution

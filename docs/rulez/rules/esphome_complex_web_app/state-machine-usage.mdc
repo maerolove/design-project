@@ -1,0 +1,70 @@
+---
+description: State machine usage rule
+globs: ["**/*.py", "**/test*.py", "**/tests/**"]
+alwaysApply: true
+---
+
+# STATE MACHINE USAGE RULE
+
+## ИСПОЛЬЗУЙ ТОЛЬКО СТЕЙТ МАШИНУ ДЛЯ СОСТОЯНИЙ
+- **ALWAYS use state machine constants** for all state checks
+- **NEVER hardcode state strings** like "valid", "invalid", "compiling"
+- **ALWAYS import state machine** and use its constants
+- **NEVER accept multiple states** in one assertion (no "state in [A, B]")
+- **ALWAYS check ONE specific state** per test case
+
+## Required Actions:
+- **Import state machine**: `from shared.state_machine_simplified import get_state_machine_manager`
+- **Import state types**: `from shared.state_machine.models import StateMachineType`
+- **Use state constants** from state machine JSON
+- **Check ONE state per test** - each test validates specific expected state
+
+## Examples of WRONG behavior:
+```python
+# WRONG - hardcoded strings
+assert state == "valid"
+assert state == "invalid" 
+assert state in ["valid", "invalid"]  # Multiple states!
+
+# WRONG - no state machine usage
+if "X-Current-State" in headers:
+    state = headers["X-Current-State"]
+    assert state in ["VALIDATING", "VALID", "INVALID"]  # Multiple states!
+```
+
+## Examples of CORRECT behavior:
+```python
+# CORRECT - use state machine
+from shared.state_machine_simplified import get_state_machine_manager
+from shared.state_machine.models import StateMachineType
+
+# Get state machine
+main_machine = get_state_machine_manager().get_machine(StateMachineType.MAIN)
+
+# Check ONE specific state per test case
+if "X-Current-State" in headers:
+    state = headers["X-Current-State"]
+    assert state == "valid", f"Valid config should return 'valid' state, got {state}"
+
+# Different test case checks different state
+if "X-Current-State" in headers:
+    state = headers["X-Current-State"]
+    assert state == "invalid", f"Invalid config should return 'invalid' state, got {state}"
+```
+
+## State Machine States (from JSON):
+- **Main flow**: INITIAL, EDITING, VALIDATING, VALID, INVALID, COMPILING, COMPILED, COMPILATION_FAILED, DOWNLOADING, DOWNLOADING_OTA
+- **QEMU flow**: QEMU_IDLE, QEMU_STARTING, QEMU_RUNNING, QEMU_STOPPING, QEMU_STOPPED, QEMU_FAILED
+- **Template flow**: TEMPLATE_IDLE, TEMPLATE_BROWSING, TEMPLATE_LOADING, TEMPLATE_CUSTOMIZING, TEMPLATE_APPLIED
+
+## Test Structure:
+- **Each test validates ONE specific state**
+- **Valid config test** → expects "valid" state
+- **Invalid config test** → expects "invalid" state  
+- **Compiling test** → expects "compiling" state
+- **Download test** → expects "downloading" state
+
+## Exception:
+- Only use hardcoded strings if state machine is not available
+- Always prefer state machine constants over hardcoded strings
+- Never accept multiple states in one assertion

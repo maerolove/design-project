@@ -1,0 +1,87 @@
+# Git File Check Rule
+
+## КРИТИЧЕСКОЕ ПРАВИЛО: Проверка файлов перед git add
+
+### Требование:
+ВСЕГДА проверять статус git и добавлять только нужные файлы перед коммитом.
+
+### Обязательные действия:
+1. **ВСЕГДА** выполнять `git status` перед `git add`
+2. **ВСЕГДА** проверять какие файлы изменены
+3. **ВСЕГДА** добавлять только нужные файлы через `git add <specific-files>`
+4. **НИКОГДА** не использовать `git add .` или `git add -A`
+
+### Процедура:
+```bash
+# 1. Проверить статус
+git status
+
+# 2. Добавить только нужные файлы
+git add path/to/specific/file1
+git add path/to/specific/file2
+
+# 3. Проверить что добавлено
+git status
+
+# 4. Сделать коммит
+git commit -m "message"
+```
+
+### Запрещенные действия:
+- ❌ `git add .` - добавляет все файлы
+- ❌ `git add -A` - добавляет все файлы
+- ❌ `git add *` - добавляет все файлы
+- ❌ Коммит без проверки статуса
+
+### Разрешенные действия:
+- ✅ `git add specific/file/path` - добавляет конкретный файл
+- ✅ `git add frontend/src/App.jsx` - добавляет конкретный файл
+- ✅ `git add backend/tests/conftest_helpers.py` - добавляет конкретный файл
+
+### Проверка перед коммитом:
+1. Убедиться что добавлены только нужные файлы
+2. Убедиться что не добавлены временные файлы
+3. Убедиться что не добавлены файлы конфигурации системы
+4. Убедиться что не добавлены файлы сборки
+
+### Примеры правильного подхода:
+```bash
+# Правильно - проверяем статус
+git status
+# On branch main
+# Changes not staged for commit:
+#   modified:   frontend/src/App.jsx
+#   modified:   backend/tests/conftest_helpers.py
+#   modified:   backend/tests/e2e/tests/basic-loading.spec.cjs
+#   untracked:  common/configs/default.yaml
+
+# Добавляем только нужные файлы
+git add frontend/src/App.jsx
+git add backend/tests/conftest_helpers.py
+git add backend/tests/e2e/tests/basic-loading.spec.cjs
+git add common/configs/default.yaml
+
+# Проверяем что добавлено
+git status
+# Changes to be committed:
+#   modified:   frontend/src/App.jsx
+#   modified:   backend/tests/conftest_helpers.py
+#   modified:   backend/tests/e2e/tests/basic-loading.spec.cjs
+#   new file:   common/configs/default.yaml
+```
+
+### Примеры неправильного подхода:
+```bash
+# НЕПРАВИЛЬНО - добавляем все файлы
+git add .
+
+# НЕПРАВИЛЬНО - не проверяем статус
+git add some-file
+git commit -m "fix"
+```
+
+### Обновление правил:
+- ВСЕГДА проверяй статус перед добавлением файлов
+- ВСЕГДА добавляй только конкретные файлы
+- НИКОГДА не добавляй все файлы разом
+- ВСЕГДА проверяй что добавлено перед коммитом

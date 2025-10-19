@@ -1,0 +1,49 @@
+---
+description: Useless tests rule
+globs: ["**/test*.py", "**/*test*.py"]
+alwaysApply: true
+---
+
+# USELESS TESTS RULE
+
+## НЕ ДЕЛАЙ БЕСПОЛЕЗНЫЕ ТЕСТЫ
+- **NEVER write tests that accept any status code** as "valid"
+- **NEVER write tests that only check "response is not None"**
+- **NEVER write tests that accept both success and failure** as valid outcomes
+- **NEVER write tests that don't verify actual functionality**
+
+## Examples of USELESS tests:
+```python
+# НЕПРАВИЛЬНО - принимает любой статус
+assert response.status in [200, 400, 422, 500]
+
+# НЕПРАВИЛЬНО - только проверяет что ответ есть
+assert result is not None
+
+# НЕПРАВИЛЬНО - принимает и успех и ошибку
+# Accept both success and failure as valid test outcomes
+```
+
+## Examples of USEFUL tests:
+```python
+# ПРАВИЛЬНО - проверяет конкретный статус
+assert response.status == 200
+
+# ПРАВИЛЬНО - проверяет конкретный результат
+assert result["status"] == "success"
+
+# ПРАВИЛЬНО - проверяет функциональность
+assert "valid" in result or "error" in result
+```
+
+## Required Actions:
+- **ALWAYS find and fix useless tests**
+- **ALWAYS make tests verify actual functionality**
+- **ALWAYS delete tests that don't test anything**
+- **ALWAYS ensure tests fail when functionality is broken**
+
+## When finding useless tests:
+1. **Identify tests that accept any outcome**
+2. **Fix them to verify specific functionality**
+3. **Delete tests that can't be fixed**
+4. **Ensure tests actually test what they claim to test**

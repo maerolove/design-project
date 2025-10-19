@@ -1,0 +1,72 @@
+# Shared Configuration Files Rule
+
+## КРИТИЧЕСКОЕ ПРАВИЛО: Общие файлы конфигурации
+
+### Требование:
+Фронтенд и бекенд ДОЛЖНЫ использовать общие файлы для дефолтной конфигурации.
+
+### Детали:
+- Дефолтная конфигурация должна храниться в общем файле, доступном и фронтенду, и бекенду
+- НЕ ДОПУСКАЕТСЯ дублирование дефолтной конфигурации в разных местах
+- НЕ ДОПУСКАЕТСЯ хардкод дефолтной конфигурации в коде фронтенда или бекенда
+- Дефолтная конфигурация должна быть в формате YAML и валидна для ESPHome
+
+### Структура:
+```
+shared/
+├── default-config.yaml          # Дефолтная конфигурация ESPHome
+├── config-templates/            # Шаблоны конфигураций
+│   ├── basic.yaml
+│   ├── complex.yaml
+│   └── minimal.yaml
+└── validation-rules/            # Правила валидации
+    └── esphome-schema.json
+```
+
+### Использование:
+- Фронтенд: импортирует `shared/default-config.yaml`
+- Бекенд: читает `shared/default-config.yaml` через API
+- Тесты: используют `shared/config-templates/` для тестовых данных
+
+### Пример дефолтной конфигурации:
+```yaml
+esphome:
+  name: my-device
+  platform: ESP32
+  board: esp32dev
+
+wifi:
+  ssid: "MyWiFi"
+  password: "MyPassword"
+
+api:
+  encryption:
+    key: "your-encryption-key-here"
+
+ota:
+  password: "your-ota-password-here"
+
+logger:
+
+switch:
+  - platform: gpio
+    pin: GPIO2
+    name: "Test Switch"
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+```
+
+### Нарушения:
+- ❌ Хардкод конфигурации в `frontend/src/App.jsx`
+- ❌ Хардкод конфигурации в `backend/services/`
+- ❌ Дублирование конфигурации в разных файлах
+- ❌ Использование фикстур только для фронтенда
+
+### Соответствие:
+- ✅ Общий файл `shared/default-config.yaml`
+- ✅ Импорт в фронтенд из shared директории
+- ✅ Чтение в бекенде из shared директории
+- ✅ Единый источник истины для дефолтной конфигурации

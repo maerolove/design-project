@@ -1,0 +1,17 @@
+# FILELIST MANAGEMENT RULE
+
+## ЧИТАТЬ FILELIST ПЕРЕД КАЖДОЙ ЗАДАЧЕЙ
+- **ALWAYS read ./FILELIST** before starting any task
+- **ALWAYS update ./FILELIST** after completing any task
+- **ALWAYS check project structure** from FILELIST before making changes
+
+## Required Actions:
+- Read FILELIST to understand current project state
+- Update FILELIST when adding/removing files
+- Document changes in FILELIST metadata
+- Keep FILELIST synchronized with actual project structure
+
+## Examples:
+- Before coding: `cat ./FILELIST` to understand structure
+- After adding files: Update FILELIST with new file entries
+- After refactoring: Update FILELIST to reflect new organization
