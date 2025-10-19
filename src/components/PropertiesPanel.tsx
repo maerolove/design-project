@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAppStore } from '../store/appStore';
+import { useAppStore } from '@/store/appStore';
 
 export const PropertiesPanel: React.FC = () => {
   const selection = useAppStore((s) => s.selection);

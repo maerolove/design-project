@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAppStore } from '../store/appStore';
+import { useAppStore } from '@/store/appStore';
 
 export const StatusBar: React.FC = () => {
   const activeTool = useAppStore((s) => s.ui.activeTool);
