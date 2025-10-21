@@ -1,26 +1,33 @@
-# Three Editor Scaffold (Governance setup)
+# Object Compliance Manager
 
-This repository is preparing rules and project governance ahead of the main application scaffolding.
+Веб-приложение (React + Vite) для управления объектами и нормативными документами. Приложение реализует типичный SPA с трёхпанельным интерфейсом: слева расположены нормативы, в центре — карточка выбранного объекта, справа — список объектов.
 
-- No application features are introduced in this task.
-- The focus here is integrating development guidelines and templates to streamline future work.
+## Основные возможности
 
-## Rules & Guidelines
+- Список объектов с выбором и добавлением новых карточек.
+- Хранение истории привязки нормативных документов к объектам.
+- Загрузка нормативов (PDF/Word), хранение текстовых выдержек и полнотекстовый поиск по ключевым словам.
+- Привязка нормативов к выбранному объекту с указанием ответственного и комментария.
+- Экспорт отчёта по объекту в формате PDF или Word.
 
-- Upstream rules: see docs/rulez (vendored from https://github.com/KolkhozIO/rulez)
-- Local summary for AI tooling and humans: see ./.cursorrules
-- Project docs entrypoint: ./docs/README.md
-
-To refresh upstream rules locally:
+## Быстрый старт
 
 ```bash
-node scripts/sync-rulez.mjs
+npm install
+npm run dev
 ```
 
-## Contributing
+После запуска приложение будет доступно по адресу http://localhost:5173 (порт может отличаться, смотрите вывод Vite).
 
-See CONTRIBUTING.md for the workflow used by this project and how it ties to the rulez guidelines.
+## Структура проекта
 
-## Status
+- `src/App.tsx` — точка входа SPA и разметка областей интерфейса.
+- `src/components/DocumentList.tsx` — левая панель с нормативами, поиском и загрузкой документов.
+- `src/components/ObjectList.tsx` — правая панель со списком объектов и формой добавления новых карточек.
+- `src/components/ObjectDetails.tsx` — центральная панель с карточкой объекта, активными нормативами и историей привязок.
+- `src/store/appStore.ts` — централизованное состояние (zustand) с демо-данными.
+- `src/utils/` — форматирование дат и экспорт отчётов.
 
-Governance and templates are set up first. Application components and code scaffolding will be handled in a subsequent task.
+## Демонстрационные данные
+
+В сторе предустановлены несколько объектов и нормативов, чтобы сразу увидеть интерфейс и историю привязок. Все операции выполняются на стороне клиента и сохраняются только на время сессии в браузере.
